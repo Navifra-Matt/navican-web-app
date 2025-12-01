@@ -22,13 +22,9 @@ SocketCAN 인터페이스에서 CAN 패킷을 읽어 ClickHouse와 InfluxDB 데�
 │   │   ├── clickhouse/
 │   │   │   ├── config.go
 │   │   │   └── writer.go
-│   │   └── questdb/
-│   │       ├── config.go
-│   │       └── writer.go
 │   └── api/                  # HTTP API 핸들러
 │       ├── server.go
 │       ├── clickhouse.go
-│       ├── questdb.go
 │       └── utils.go
 ├── bin/                      # 빌드된 바이너리
 │   ├── can-reader
@@ -112,11 +108,6 @@ CLICKHOUSE_USERNAME=default
 CLICKHOUSE_PASSWORD=
 CLICKHOUSE_TABLE=can_messages
 CLICKHOUSE_STATS_TABLE=can_interface_stats
-
-# QuestDB Configuration
-QUESTDB_HOST=localhost
-QUESTDB_ILP_PORT=9009
-QUESTDB_HTTP_PORT=9000
 
 # General Configuration
 BATCH_SIZE=1000
@@ -420,7 +411,7 @@ curl "http://localhost:8080/api/influxdb/health"
 
 ## Docker Compose로 실행
 
-프로젝트에 포함된 docker-compose.yml로 ClickHouse와 QuestDB를 쉽게 실행할 수 있습니다:
+프로젝트에 포함된 docker-compose.yml로 ClickHouse를 쉽게 실행할 수 있습니다:
 
 ```bash
 cd .devcontainer
@@ -429,10 +420,7 @@ docker-compose up -d
 
 이렇게 하면 다음 서비스가 시작됩니다:
 - **ClickHouse**: 포트 9000 (native), 8123 (HTTP)
-- **QuestDB**: 포트 9009 (ILP), 9003 (Web Console), 8812 (PostgreSQL), 9000 (HTTP)
 - **HyperDX**: 포트 8080 (모니터링 UI)
-
-QuestDB Web Console: http://localhost:9003
 
 ---
 
@@ -462,10 +450,6 @@ ORDER BY (timestamp, can_id)
 PARTITION BY toYYYYMMDD(timestamp)
 SETTINGS index_granularity = 8192
 ```
-
-### QuestDB 테이블
-
-QuestDB는 InfluxDB Line Protocol을 통해 자동으로 `can_frame` 테이블을 생성합니다.
 
 ---
 
@@ -502,41 +486,6 @@ FROM can_messages
 WHERE timestamp >= now() - INTERVAL 1 HOUR
 GROUP BY minute
 ORDER BY minute;
-```
-
-### QuestDB SQL 쿼리
-
-#### Web Console에서 조회
-
-1. 브라우저에서 http://localhost:9003 접속
-2. SQL 쿼리 입력:
-
-```sql
--- 최근 데이터 조회
-SELECT * FROM can_frame
-ORDER BY timestamp DESC
-LIMIT 100;
-
--- 특정 CAN ID 필터링
-SELECT * FROM can_frame
-WHERE can_id = '0x123'
-ORDER BY timestamp DESC;
-
--- 시간대별 메시지 수
-SELECT
-    timestamp,
-    count() as message_count
-FROM can_frame
-SAMPLE BY 1m
-ORDER BY timestamp DESC;
-```
-
-#### PostgreSQL 프로토콜로 조회
-
-QuestDB는 PostgreSQL 와이어 프로토콜을 지원합니다:
-
-```bash
-psql -h localhost -p 8812 -U admin -d qdb
 ```
 
 ---
@@ -587,7 +536,7 @@ curl "http://localhost:8080/api/clickhouse/messages?limit=10"
 ```
 2025/11/24 12:00:00 Processed 1000 messages (errors: 0)
 2025/11/24 12:00:05 Flushed 1000 messages to ClickHouse
-2025/11/24 12:00:05 Flushed 1000 messages to QuestDB
+2025/11/24 12:00:05 Flushed 1000 messages to InfluxDB
 ```
 
 ### API Server 로그
@@ -602,11 +551,11 @@ curl "http://localhost:8080/api/clickhouse/messages?limit=10"
 
 ## 데이터베이스 비교
 
-| 특징 | ClickHouse | QuestDB |
+| 특징 | ClickHouse | InfluxDB |
 |------|-----------|---------|
 | **강점** | 복잡한 분석 쿼리, 집계 | 시계열 데이터, 빠른 쓰기 |
-| **쿼리 언어** | SQL | SQL |
-| **압축률** | 매우 높음 | 보통 |
+| **쿼리 언어** | SQL | Flux / InfluxQL |
+| **압축률** | 매우 높음 | 높음 |
 | **실시간 조회** | 우수 | 매우 우수 |
 | **사용 사례** | 대용량 데이터 분석 | 실시간 모니터링, 대시보드 |
 
@@ -701,12 +650,12 @@ sudo ip link set can0 up type can bitrate 500000
 - 방화벽 설정 확인 (기본 포트: 9000)
 - 사용자 권한 확인
 
-### QuestDB 연결 실패
+### InfluxDB 연결 실패
 
-- QuestDB 서버가 실행 중인지 확인
-- ILP 포트가 열려있는지 확인 (기본 포트: 9009)
-- HTTP 포트가 열려있는지 확인 (기본 포트: 9000)
-- docker-compose로 실행했다면: `docker-compose ps`로 상태 확인
+- InfluxDB 서버가 실행 중인지 확인
+- HTTP 포트가 열려있는지 확인 (기본 포트: 8086)
+- API 토큰이 올바른지 확인
+- 조직 이름과 버킷 이름이 정확한지 확인
 
 ### 권한 오류
 
