@@ -1,15 +1,18 @@
 services:
   app:
-    image: mcr.microsoft.com/devcontainers/go:2-1.24-bookworm
+    image: mcr.microsoft.com/devcontainers/go:2-1.25-bookworm
+    container_name: app-backend
+    privileged: true
     volumes:
       - ..:/workspace/backend:cached
     command: sleep infinity
-    network_mode: service:hyperdx
     depends_on:
       - hyperdx
+      - influxdb3
 
   hyperdx:
     image: docker.hyperdx.io/hyperdx/hyperdx-all-in-one:latest
+    container_name: hyperdx-all-in-one
     user: "0:0"
     privileged: true
     ports:
@@ -26,8 +29,8 @@ services:
       - ../.config/custom-local-config.yaml:/etc/otelcol-contrib/custom.config.yaml:ro
       - /private/var/log:/host/var/log:ro
     environment:
-      # - CLICKHOUSE_USER=default
-      # - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-hyperdx_dev_password}
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-hyperdx_dev_password}
       - CUSTOM_OTELCOL_CONFIG_FILE=/etc/otelcol-contrib/custom.config.yaml
     ulimits:
       nofile:
@@ -37,11 +40,12 @@ services:
   influxdb3:
     container_name: influxdb3-core
     image: influxdb:3-core
+    user: "0:0"    
     ports:
-      - "8181:8181"    # HTTP API & UI
+      - "8181:8181"
     volumes:
-      - ../.volumes/influxdb_data:/var/lib/influxdb3/data
-      - ../.volumes/influxdb_plugin:/var/lib/influxdb3/plugins
+      - ../.volumes/influxdb3/data:/var/lib/influxdb3/data
+      - ../.volumes/influxdb3/plugin:/var/lib/influxdb3/plugins
     command:
       - influxdb3
       - serve
