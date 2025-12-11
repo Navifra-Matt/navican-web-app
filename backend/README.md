@@ -435,7 +435,6 @@ CREATE TABLE IF NOT EXISTS can_messages (
     timestamp DateTime64(6),
     interface String,
     can_id UInt32,
-    dlc UInt8,
     data_0 UInt8,
     data_1 UInt8,
     data_2 UInt8,
@@ -443,8 +442,7 @@ CREATE TABLE IF NOT EXISTS can_messages (
     data_4 UInt8,
     data_5 UInt8,
     data_6 UInt8,
-    data_7 UInt8,
-    data_hex String
+    data_7 UInt8
 ) ENGINE = MergeTree()
 ORDER BY (timestamp, can_id)
 PARTITION BY toYYYYMMDD(timestamp)

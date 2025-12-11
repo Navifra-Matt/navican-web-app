@@ -110,7 +110,6 @@ func (w *Writer) flush() error {
 			},
 			map[string]any{
 				"can_id_decimal": msg.Frame.ID,
-				"dlc":            msg.Frame.DLC,
 				"data_0":         msg.Frame.Data[0],
 				"data_1":         msg.Frame.Data[1],
 				"data_2":         msg.Frame.Data[2],
@@ -119,9 +118,6 @@ func (w *Writer) flush() error {
 				"data_5":         msg.Frame.Data[5],
 				"data_6":         msg.Frame.Data[6],
 				"data_7":         msg.Frame.Data[7],
-				"data_hex":       fmt.Sprintf("%02X %02X %02X %02X %02X %02X %02X %02X",
-					msg.Frame.Data[0], msg.Frame.Data[1], msg.Frame.Data[2], msg.Frame.Data[3],
-					msg.Frame.Data[4], msg.Frame.Data[5], msg.Frame.Data[6], msg.Frame.Data[7]),
 			},
 			msg.Timestamp,
 		)
