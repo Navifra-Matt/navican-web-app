@@ -128,10 +128,9 @@ API_PORT=8080
 | `CLICKHOUSE_PASSWORD` | ClickHouse 비밀번호 | - |
 | `CLICKHOUSE_TABLE` | CAN 메시지 테이블 이름 | can_messages |
 | `CLICKHOUSE_STATS_TABLE` | 통계 테이블 이름 | can_interface_stats |
-| `INFLUXDB_URL` | InfluxDB 서버 URL | http://localhost:8086 |
-| `INFLUXDB_TOKEN` | InfluxDB 인증 토큰 | - |
-| `INFLUXDB_ORG` | InfluxDB 조직 이름 | my-org |
-| `INFLUXDB_BUCKET` | InfluxDB 버킷 이름 | can_messages |
+| `INFLUXDB_URL` | InfluxDB v3 서버 URL | http://localhost:8181 |
+| `INFLUXDB_TOKEN` | InfluxDB v3 인증 토큰 | - |
+| `INFLUXDB_DATABASE` | InfluxDB v3 데이터베이스 이름 | can_messages |
 | `BATCH_SIZE` | 데이터베이스 배치 크기 | 1000 |
 | `API_PORT` | API 서버 포트 | 8080 |
 
