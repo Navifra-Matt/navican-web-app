@@ -3,3 +3,7 @@
 
 # 바이너리
 bin
+
+# 환경 설정 파일
+.env.development
+.env.production
