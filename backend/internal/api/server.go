@@ -20,18 +20,17 @@ type Server struct {
 
 // ServerConfig holds API server configuration
 type ServerConfig struct {
-	Port           int
-	CHHost         string
-	CHPort         int
-	CHDatabase     string
-	CHUsername     string
-	CHPassword     string
-	CHTable        string
-	CHStatsTable   string
-	InfluxDBURL    string
-	InfluxDBToken  string
-	InfluxDBOrg    string
-	InfluxDBBucket string
+	Port             int
+	CHHost           string
+	CHPort           int
+	CHDatabase       string
+	CHUsername       string
+	CHPassword       string
+	CHTable          string
+	CHStatsTable     string
+	InfluxDBURL      string
+	InfluxDBToken    string
+	InfluxDBDatabase string
 }
 
 // NewServer creates a new API server instance
@@ -65,7 +64,7 @@ func NewServer(config ServerConfig) (*Server, error) {
 	// Create API handlers
 	clickhouseAPI := NewClickHouseAPI(chConn, config.CHTable)
 
-	influxdbAPI, err := NewInfluxDBAPI(config.InfluxDBURL, config.InfluxDBToken, config.InfluxDBOrg, config.InfluxDBBucket)
+	influxdbAPI, err := NewInfluxDBAPI(config.InfluxDBURL, config.InfluxDBToken, config.InfluxDBDatabase)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create InfluxDB API: %w", err)
 	}

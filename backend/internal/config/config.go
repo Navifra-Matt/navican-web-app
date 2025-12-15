@@ -24,11 +24,10 @@ type Config struct {
 	ClickHouseTable    string
 	ClickHouseStatsTable string
 
-	// InfluxDB
-	InfluxDBURL    string
-	InfluxDBToken  string
-	InfluxDBOrg    string
-	InfluxDBBucket string
+	// InfluxDB v3
+	InfluxDBURL      string
+	InfluxDBToken    string
+	InfluxDBDatabase string
 
 	// General
 	BatchSize int
@@ -50,8 +49,7 @@ func LoadConfig(envFile string) (*Config, error) {
 		ClickHouseStatsTable: "can_interface_stats",
 		InfluxDBURL:          "http://localhost:8086",
 		InfluxDBToken:        "",
-		InfluxDBOrg:          "my-org",
-		InfluxDBBucket:       "can_messages",
+		InfluxDBDatabase:     "can_messages",
 		BatchSize:            1000,
 		APIPort:              8080,
 	}
@@ -119,10 +117,8 @@ func LoadConfig(envFile string) (*Config, error) {
 			config.InfluxDBURL = value
 		case "INFLUXDB_TOKEN":
 			config.InfluxDBToken = value
-		case "INFLUXDB_ORG":
-			config.InfluxDBOrg = value
-		case "INFLUXDB_BUCKET":
-			config.InfluxDBBucket = value
+		case "INFLUXDB_DATABASE":
+			config.InfluxDBDatabase = value
 		case "BATCH_SIZE":
 			config.BatchSize, _ = strconv.Atoi(value)
 		case "API_PORT":

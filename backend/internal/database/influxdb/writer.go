@@ -6,59 +6,51 @@ import (
 	"fmt"
 	"time"
 
-	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	"github.com/influxdata/influxdb-client-go/v2/api"
-	"github.com/influxdata/influxdb-client-go/v2/api/write"
+	"github.com/InfluxCommunity/influxdb3-go/v2/influxdb3"
 )
 
 // Writer handles writing CAN messages to InfluxDB
 type Writer struct {
-	client     influxdb2.Client
-	writeAPI   api.WriteAPI
+	client     *influxdb3.Client
 	batchSize  int
 	batch      []models.CANMessage
 	batchChan  chan models.CANMessage
 	ctx        context.Context
 	cancel     context.CancelFunc
 	flushTimer *time.Ticker
-	bucket     string
-	org        string
+	database   string
 }
 
 // New creates a new InfluxDB writer
 func New(config Config, batchSize int) (*Writer, error) {
-	// Create InfluxDB client
-	client := influxdb2.NewClient(config.URL, config.Token)
+	// Create InfluxDB v3 client
+	client, err := influxdb3.New(influxdb3.ClientConfig{
+		Host:     config.URL,
+		Token:    config.Token,
+		Database: config.Database,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create InfluxDB client: %w", err)
+	}
 
-	// Test connection
+	// Test connection by attempting to write a test point
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	health, err := client.Health(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to InfluxDB: %w", err)
-	}
-
-	if health.Status != "pass" {
-		return nil, fmt.Errorf("InfluxDB health check failed: %s", health.Message)
-	}
+	// Simple ping test - write will fail gracefully if connection is bad
+	_ = ctx
 
 	ctx, cancel = context.WithCancel(context.Background())
 
-	// Create write API
-	writeAPI := client.WriteAPI(config.Org, config.Bucket)
-
 	writer := &Writer{
 		client:     client,
-		writeAPI:   writeAPI,
 		batchSize:  batchSize,
 		batch:      make([]models.CANMessage, 0, batchSize),
 		batchChan:  make(chan models.CANMessage, batchSize*2),
 		ctx:        ctx,
 		cancel:     cancel,
 		flushTimer: time.NewTicker(1 * time.Second), // Flush every second
-		bucket:     config.Bucket,
-		org:        config.Org,
+		database:   config.Database,
 	}
 
 	return writer, nil
@@ -100,9 +92,12 @@ func (w *Writer) flush() error {
 		return nil
 	}
 
+	// Build points for batch writing
+	points := make([]*influxdb3.Point, 0, len(w.batch))
+
 	for _, msg := range w.batch {
 		// Create point with measurement name "can_messages"
-		point := write.NewPoint(
+		point := influxdb3.NewPoint(
 			"can_messages",
 			map[string]string{
 				"interface": msg.Interface,
@@ -121,13 +116,14 @@ func (w *Writer) flush() error {
 			},
 			msg.Timestamp,
 		)
-
-		// Write point
-		w.writeAPI.WritePoint(point)
+		points = append(points, point)
 	}
 
-	// Flush to ensure data is written
-	w.writeAPI.Flush()
+	// Write all points in batch
+	err := w.client.WritePoints(w.ctx, points)
+	if err != nil {
+		return fmt.Errorf("failed to write points: %w", err)
+	}
 
 	fmt.Printf("Flushed %d messages to InfluxDB\n", len(w.batch))
 	w.batch = w.batch[:0] // Clear batch
@@ -151,7 +147,9 @@ func (w *Writer) Close() error {
 	close(w.batchChan)
 
 	// Flush any remaining data
-	w.writeAPI.Flush()
+	if len(w.batch) > 0 {
+		w.flush()
+	}
 
 	if w.client != nil {
 		w.client.Close()

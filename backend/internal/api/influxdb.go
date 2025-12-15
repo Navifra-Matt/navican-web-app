@@ -8,41 +8,29 @@ import (
 	"net/http"
 	"time"
 
-	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/InfluxCommunity/influxdb3-go/v2/influxdb3"
 )
 
 // InfluxDBAPI handles HTTP API requests for InfluxDB data
 type InfluxDBAPI struct {
-	client influxdb2.Client
-	org    string
-	bucket string
+	client   *influxdb3.Client
+	database string
 }
 
 // NewInfluxDBAPI creates a new InfluxDB API handler
-func NewInfluxDBAPI(url, token, org, bucket string) (*InfluxDBAPI, error) {
-	client := influxdb2.NewClient(url, token)
-
-	// Test connection
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	health, err := client.Health(ctx)
+func NewInfluxDBAPI(url, token, database string) (*InfluxDBAPI, error) {
+	client, err := influxdb3.New(influxdb3.ClientConfig{
+		Host:     url,
+		Token:    token,
+		Database: database,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to InfluxDB: %w", err)
-	}
-
-	if health.Status != "pass" {
-		msg := ""
-		if health.Message != nil {
-			msg = *health.Message
-		}
-		return nil, fmt.Errorf("InfluxDB health check failed: %s", msg)
+		return nil, fmt.Errorf("failed to create InfluxDB client: %w", err)
 	}
 
 	return &InfluxDBAPI{
-		client: client,
-		org:    org,
-		bucket: bucket,
+		client:   client,
+		database: database,
 	}, nil
 }
 
@@ -55,79 +43,87 @@ func (api *InfluxDBAPI) GetMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Build Flux query
+	// Build SQL query for InfluxDB v3
 	query := fmt.Sprintf(`
-		from(bucket: "%s")
-		|> range(start: %s, stop: %s)
-		|> filter(fn: (r) => r["_measurement"] == "can_messages")
-	`, api.bucket, getStartTime(params), getStopTime(params))
+		SELECT time, interface, can_id, can_id_decimal,
+		       data_0, data_1, data_2, data_3, data_4, data_5, data_6, data_7
+		FROM can_messages
+		WHERE time >= '%s' AND time <= '%s'
+	`, getSQLStartTime(params), getSQLStopTime(params))
 
 	// Add filters
 	if params.Interface != "" {
-		query += fmt.Sprintf(`|> filter(fn: (r) => r["interface"] == "%s")`, params.Interface)
+		query += fmt.Sprintf(` AND interface = '%s'`, params.Interface)
 	}
 
 	if params.CANID != nil {
-		query += fmt.Sprintf(`|> filter(fn: (r) => r["can_id"] == "0x%X")`, *params.CANID)
+		query += fmt.Sprintf(` AND can_id = '0x%X'`, *params.CANID)
 	}
 
 	// Sort and limit
-	query += `|> sort(columns: ["_time"], desc: true)`
+	query += ` ORDER BY time DESC`
 
 	limit := 100
 	if params.Limit > 0 {
 		limit = params.Limit
 	}
-	query += fmt.Sprintf(`|> limit(n: %d)`, limit)
+	query += fmt.Sprintf(` LIMIT %d`, limit)
 
-	// Execute query
-	queryAPI := api.client.QueryAPI(api.org)
-	result, err := queryAPI.Query(context.Background(), query)
+	// Execute query using SQL
+	iterator, err := api.client.Query(context.Background(), query)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Query failed: %v", err))
 		return
 	}
-	defer result.Close()
 
 	// Parse results
 	messages := []models.CANMessageResponse{}
-	currentMessage := make(map[string]any)
-	var currentTime time.Time
 
-	for result.Next() {
-		record := result.Record()
+	for iterator.Next() {
+		record := iterator.Value()
 
-		// If we have a new timestamp, save the previous message
-		if !currentTime.IsZero() && !record.Time().Equal(currentTime) {
-			if msg := buildMessageFromRecord(currentMessage, currentTime); msg != nil {
-				messages = append(messages, *msg)
+		msg := &models.CANMessageResponse{
+			Data: make([]uint8, 8),
+		}
+
+		// Extract fields from record
+		if t, ok := record["time"].(time.Time); ok {
+			msg.Timestamp = t
+		}
+		if iface, ok := record["interface"].(string); ok {
+			msg.Interface = iface
+		}
+		if canIDHex, ok := record["can_id"].(string); ok {
+			msg.CANIDHex = canIDHex
+			var canID uint32
+			fmt.Sscanf(canIDHex, "0x%X", &canID)
+			msg.CANID = canID
+		}
+		if canIDDecimal, ok := record["can_id_decimal"].(int64); ok {
+			msg.CANID = uint32(canIDDecimal)
+			if msg.CANIDHex == "" {
+				msg.CANIDHex = fmt.Sprintf("0x%X", canIDDecimal)
 			}
-			currentMessage = make(map[string]any)
 		}
 
-		currentTime = record.Time()
-		field := record.Field()
-		value := record.Value()
-
-		currentMessage[field] = value
-
-		// Store tags
-		if iface, ok := record.ValueByKey("interface").(string); ok {
-			currentMessage["interface"] = iface
+		// Extract data bytes
+		for i := 0; i < 8; i++ {
+			field := fmt.Sprintf("data_%d", i)
+			if val, ok := record[field].(int64); ok {
+				msg.Data[i] = uint8(val)
+			} else if val, ok := record[field].(uint8); ok {
+				msg.Data[i] = val
+			}
 		}
-		if canID, ok := record.ValueByKey("can_id").(string); ok {
-			currentMessage["can_id"] = canID
-		}
+
+		msg.DataHex = fmt.Sprintf("%02X %02X %02X %02X %02X %02X %02X %02X",
+			msg.Data[0], msg.Data[1], msg.Data[2], msg.Data[3],
+			msg.Data[4], msg.Data[5], msg.Data[6], msg.Data[7])
+
+		messages = append(messages, *msg)
 	}
 
-	// Don't forget the last message
-	if !currentTime.IsZero() {
-		if msg := buildMessageFromRecord(currentMessage, currentTime); msg != nil {
-			messages = append(messages, *msg)
-		}
-	}
-
-	if err := result.Err(); err != nil {
+	if err := iterator.Err(); err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Query error: %v", err))
 		return
 	}
@@ -144,36 +140,38 @@ func (api *InfluxDBAPI) GetMessageCount(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Build SQL count query for InfluxDB v3
 	query := fmt.Sprintf(`
-		from(bucket: "%s")
-		|> range(start: %s, stop: %s)
-		|> filter(fn: (r) => r["_measurement"] == "can_messages")
-		|> filter(fn: (r) => r["_field"] == "can_id_decimal")
-	`, api.bucket, getStartTime(params), getStopTime(params))
+		SELECT COUNT(*) as count
+		FROM can_messages
+		WHERE time >= '%s' AND time <= '%s'
+	`, getSQLStartTime(params), getSQLStopTime(params))
 
 	if params.Interface != "" {
-		query += fmt.Sprintf(`|> filter(fn: (r) => r["interface"] == "%s")`, params.Interface)
+		query += fmt.Sprintf(` AND interface = '%s'`, params.Interface)
 	}
 
 	if params.CANID != nil {
-		query += fmt.Sprintf(`|> filter(fn: (r) => r["can_id"] == "0x%X")`, *params.CANID)
+		query += fmt.Sprintf(` AND can_id = '0x%X'`, *params.CANID)
 	}
 
-	query += `|> count()`
-
-	queryAPI := api.client.QueryAPI(api.org)
-	result, err := queryAPI.Query(context.Background(), query)
+	iterator, err := api.client.Query(context.Background(), query)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Query failed: %v", err))
 		return
 	}
-	defer result.Close()
 
 	count := uint64(0)
-	if result.Next() {
-		if val, ok := result.Record().Value().(int64); ok {
+	if iterator.Next() {
+		record := iterator.Value()
+		if val, ok := record["count"].(int64); ok {
 			count = uint64(val)
 		}
+	}
+
+	if err := iterator.Err(); err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Query error: %v", err))
+		return
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]uint64{"count": count})
@@ -185,20 +183,21 @@ func (api *InfluxDBAPI) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	health, err := api.client.Health(ctx)
+	// Test connection by running a simple query
+	query := "SELECT 1"
+	_, err := api.client.Query(ctx, query)
 	if err != nil {
 		respondWithError(w, http.StatusServiceUnavailable, fmt.Sprintf("Health check failed: %v", err))
 		return
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]any{
-		"status":  health.Status,
-		"message": health.Message,
-		"version": health.Version,
+		"status":  "healthy",
+		"message": "InfluxDB v3 connection successful",
 	})
 }
 
-// ExecuteQuery executes a custom Flux query
+// ExecuteQuery executes a custom SQL query
 // POST /api/influxdb/query
 func (api *InfluxDBAPI) ExecuteQuery(w http.ResponseWriter, r *http.Request) {
 	var req struct {
@@ -215,36 +214,20 @@ func (api *InfluxDBAPI) ExecuteQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queryAPI := api.client.QueryAPI(api.org)
-	result, err := queryAPI.Query(context.Background(), req.Query)
+	iterator, err := api.client.Query(context.Background(), req.Query)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Query failed: %v", err))
 		return
 	}
-	defer result.Close()
 
 	// Collect results
 	results := []map[string]any{}
-	for result.Next() {
-		record := result.Record()
-		row := make(map[string]any)
-
-		row["time"] = record.Time()
-		row["measurement"] = record.Measurement()
-		row["field"] = record.Field()
-		row["value"] = record.Value()
-
-		// Add tags
-		for k, v := range record.Values() {
-			if k != "_time" && k != "_measurement" && k != "_field" && k != "_value" {
-				row[k] = v
-			}
-		}
-
-		results = append(results, row)
+	for iterator.Next() {
+		record := iterator.Value()
+		results = append(results, record)
 	}
 
-	if err := result.Err(); err != nil {
+	if err := iterator.Err(); err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Query error: %v", err))
 		return
 	}
@@ -254,65 +237,19 @@ func (api *InfluxDBAPI) ExecuteQuery(w http.ResponseWriter, r *http.Request) {
 
 // Helper functions
 
-func getStartTime(params models.QueryParams) string {
+func getSQLStartTime(params models.QueryParams) string {
 	if params.StartTime != nil {
-		return params.StartTime.Format(time.RFC3339)
+		return params.StartTime.Format(time.RFC3339Nano)
 	}
-	return "-1h" // Default to last 1 hour
+	// Default to last 1 hour
+	return time.Now().Add(-1 * time.Hour).Format(time.RFC3339Nano)
 }
 
-func getStopTime(params models.QueryParams) string {
+func getSQLStopTime(params models.QueryParams) string {
 	if params.EndTime != nil {
-		return params.EndTime.Format(time.RFC3339)
+		return params.EndTime.Format(time.RFC3339Nano)
 	}
-	return "now()"
-}
-
-func buildMessageFromRecord(record map[string]any, timestamp time.Time) *models.CANMessageResponse {
-	msg := &models.CANMessageResponse{
-		Timestamp: timestamp,
-		Data:      make([]uint8, 8),
-	}
-
-	// Extract interface
-	if iface, ok := record["interface"].(string); ok {
-		msg.Interface = iface
-	}
-
-	// Extract CAN ID
-	if canIDHex, ok := record["can_id"].(string); ok {
-		msg.CANIDHex = canIDHex
-		var canID uint32
-		fmt.Sscanf(canIDHex, "0x%X", &canID)
-		msg.CANID = canID
-	} else if canIDDecimal, ok := record["can_id_decimal"].(int64); ok {
-		msg.CANID = uint32(canIDDecimal)
-		msg.CANIDHex = fmt.Sprintf("0x%X", canIDDecimal)
-	}
-
-	// Extract DLC
-	if dlc, ok := record["dlc"].(int64); ok {
-		msg.DLC = uint8(dlc)
-	}
-
-	// Extract data bytes
-	for i := 0; i < 8; i++ {
-		field := fmt.Sprintf("data_%d", i)
-		if val, ok := record[field].(int64); ok {
-			msg.Data[i] = uint8(val)
-		}
-	}
-
-	// Extract data_hex
-	if dataHex, ok := record["data_hex"].(string); ok {
-		msg.DataHex = dataHex
-	} else {
-		msg.DataHex = fmt.Sprintf("%02X %02X %02X %02X %02X %02X %02X %02X",
-			msg.Data[0], msg.Data[1], msg.Data[2], msg.Data[3],
-			msg.Data[4], msg.Data[5], msg.Data[6], msg.Data[7])
-	}
-
-	return msg
+	return time.Now().Format(time.RFC3339Nano)
 }
 
 // Close closes the InfluxDB client

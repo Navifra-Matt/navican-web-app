@@ -26,22 +26,21 @@ func main() {
 	log.Printf("Starting CAN Database API Server...")
 	log.Printf("Server Port: %d", cfg.APIPort)
 	log.Printf("ClickHouse: %s:%d/%s.%s", cfg.ClickHouseHost, cfg.ClickHousePort, cfg.ClickHouseDatabase, cfg.ClickHouseTable)
-	log.Printf("InfluxDB: %s/%s/%s", cfg.InfluxDBURL, cfg.InfluxDBOrg, cfg.InfluxDBBucket)
+	log.Printf("InfluxDB: %s/%s", cfg.InfluxDBURL, cfg.InfluxDBDatabase)
 
 	// Create API server configuration
 	serverConfig := api.ServerConfig{
-		Port:           cfg.APIPort,
-		CHHost:         cfg.ClickHouseHost,
-		CHPort:         cfg.ClickHousePort,
-		CHDatabase:     cfg.ClickHouseDatabase,
-		CHUsername:     cfg.ClickHouseUsername,
-		CHPassword:     cfg.ClickHousePassword,
-		CHTable:        cfg.ClickHouseTable,
-		CHStatsTable:   cfg.ClickHouseStatsTable,
-		InfluxDBURL:    cfg.InfluxDBURL,
-		InfluxDBToken:  cfg.InfluxDBToken,
-		InfluxDBOrg:    cfg.InfluxDBOrg,
-		InfluxDBBucket: cfg.InfluxDBBucket,
+		Port:             cfg.APIPort,
+		CHHost:           cfg.ClickHouseHost,
+		CHPort:           cfg.ClickHousePort,
+		CHDatabase:       cfg.ClickHouseDatabase,
+		CHUsername:       cfg.ClickHouseUsername,
+		CHPassword:       cfg.ClickHousePassword,
+		CHTable:          cfg.ClickHouseTable,
+		CHStatsTable:     cfg.ClickHouseStatsTable,
+		InfluxDBURL:      cfg.InfluxDBURL,
+		InfluxDBToken:    cfg.InfluxDBToken,
+		InfluxDBDatabase: cfg.InfluxDBDatabase,
 	}
 
 	// Create and start API server

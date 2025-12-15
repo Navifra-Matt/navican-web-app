@@ -27,7 +27,7 @@ func main() {
 	log.Printf("Starting CAN to Database bridge...")
 	log.Printf("CAN Interface: %s", cfg.CANInterface)
 	log.Printf("ClickHouse: %s:%d/%s.%s", cfg.ClickHouseHost, cfg.ClickHousePort, cfg.ClickHouseDatabase, cfg.ClickHouseTable)
-	log.Printf("InfluxDB: %s/%s/%s", cfg.InfluxDBURL, cfg.InfluxDBOrg, cfg.InfluxDBBucket)
+	log.Printf("InfluxDB: %s/%s", cfg.InfluxDBURL, cfg.InfluxDBDatabase)
 
 	// Create CAN reader
 	canReader, err := can.NewReader(cfg.CANInterface)
@@ -73,10 +73,9 @@ func main() {
 
 	// Create InfluxDB writer
 	influxConfig := influxdb.Config{
-		URL:    cfg.InfluxDBURL,
-		Token:  cfg.InfluxDBToken,
-		Org:    cfg.InfluxDBOrg,
-		Bucket: cfg.InfluxDBBucket,
+		URL:      cfg.InfluxDBURL,
+		Token:    cfg.InfluxDBToken,
+		Database: cfg.InfluxDBDatabase,
 	}
 
 	influxWriter, err := influxdb.New(influxConfig, cfg.BatchSize)
@@ -93,7 +92,7 @@ func main() {
 	// Start readers and writers
 	canReader.Start()
 	chWriter.Start(cfg.ClickHouseTable)
-	influxWriter.Start(cfg.InfluxDBBucket)
+	influxWriter.Start(cfg.InfluxDBDatabase)
 	statsWriter.Start(cfg.ClickHouseStatsTable)
 
 	log.Println("Bridge started successfully. Press Ctrl+C to stop.")
