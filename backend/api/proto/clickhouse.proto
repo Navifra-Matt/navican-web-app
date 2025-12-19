@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package clickhouse;
+
+option go_package = "can-db-writer/api/proto/clickhouse";
+
+import "google/protobuf/timestamp.proto";
+
+// ClickHouse service definition
+service ClickHouseService {
+  // Get CAN messages with optional filters
+  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
+
+  // Get message count with optional filters
+  rpc GetMessageCount(GetMessageCountRequest) returns (GetMessageCountResponse);
+
+  // Get unique CAN IDs
+  rpc GetUniqueCANIDs(GetUniqueCANIDsRequest) returns (GetUniqueCANIDsResponse);
+
+  // Get statistics grouped by CAN ID
+  rpc GetStatsByCANID(GetStatsByCANIDRequest) returns (GetStatsByCANIDResponse);
+
+  // Get CANopen messages classified by message type
+  rpc GetCANopenMessages(GetCANopenMessagesRequest) returns (GetCANopenMessagesResponse);
+
+  // Get CANopen statistics grouped by message type
+  rpc GetCANopenStats(GetCANopenStatsRequest) returns (GetCANopenStatsResponse);
+}
+
+// Common filter parameters
+message QueryFilter {
+  optional google.protobuf.Timestamp start_time = 1;
+  optional google.protobuf.Timestamp end_time = 2;
+  optional uint32 can_id = 3;
+  string interface = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// CAN Message
+message CANMessage {
+  google.protobuf.Timestamp timestamp = 1;
+  string interface = 2;
+  uint32 can_id = 3;
+  string can_id_hex = 4;
+  bytes data = 5;
+}
+
+// GetMessages request/response
+message GetMessagesRequest {
+  QueryFilter filter = 1;
+}
+
+message GetMessagesResponse {
+  repeated CANMessage messages = 1;
+}
+
+// GetMessageCount request/response
+message GetMessageCountRequest {
+  QueryFilter filter = 1;
+}
+
+message GetMessageCountResponse {
+  uint64 count = 1;
+}
+
+// GetUniqueCANIDs request/response
+message GetUniqueCANIDsRequest {
+  QueryFilter filter = 1;
+}
+
+message CANIDInfo {
+  uint32 can_id = 1;
+  string can_id_hex = 2;
+}
+
+message GetUniqueCANIDsResponse {
+  repeated CANIDInfo can_ids = 1;
+}
+
+// GetStatsByCANID request/response
+message GetStatsByCANIDRequest {
+  QueryFilter filter = 1;
+}
+
+message CANIDStats {
+  uint32 can_id = 1;
+  string can_id_hex = 2;
+  uint64 message_count = 3;
+  google.protobuf.Timestamp first_seen = 4;
+  google.protobuf.Timestamp last_seen = 5;
+}
+
+message GetStatsByCANIDResponse {
+  repeated CANIDStats stats = 1;
+}
+
+// GetCANopenMessages request/response
+message GetCANopenMessagesRequest {
+  QueryFilter filter = 1;
+  string message_type = 2;  // nmt, sync, emcy, pdo, sdo, heartbeat
+  optional uint32 node_id = 3;
+  map<string, string> pdo_mappings = 4;  // key: tpdo1/rpdo1, value: field mapping string
+}
+
+message CANopenMessage {
+  google.protobuf.Timestamp timestamp = 1;
+  string interface = 2;
+  uint32 can_id = 3;
+  string can_id_hex = 4;
+  bytes data = 5;
+  string message_type = 6;
+  uint32 node_id = 7;
+  map<string, string> parsed_data = 8;  // parsed PDO data if available
+}
+
+message GetCANopenMessagesResponse {
+  repeated CANopenMessage messages = 1;
+}
+
+// GetCANopenStats request/response
+message GetCANopenStatsRequest {
+  QueryFilter filter = 1;
+}
+
+message CANopenMessageTypeStats {
+  string message_type = 1;
+  uint64 message_count = 2;
+  google.protobuf.Timestamp first_seen = 3;
+  google.protobuf.Timestamp last_seen = 4;
+}
+
+message GetCANopenStatsResponse {
+  repeated CANopenMessageTypeStats stats = 1;
+}
