@@ -76,14 +76,7 @@ func createTable(conn driver.Conn, tableName string) error {
 			timestamp DateTime64(6),
 			interface String,
 			can_id UInt32,
-			data_0 UInt8,
-			data_1 UInt8,
-			data_2 UInt8,
-			data_3 UInt8,
-			data_4 UInt8,
-			data_5 UInt8,
-			data_6 UInt8,
-			data_7 UInt8
+			data Array(UInt8)
 		) ENGINE = MergeTree()
 		ORDER BY (timestamp, can_id)
 		PARTITION BY toYYYYMMDD(timestamp)
@@ -139,14 +132,7 @@ func (w *Writer) flush(tableName string) error {
 			msg.Timestamp,
 			msg.Interface,
 			msg.Frame.ID,
-			msg.Frame.Data[0],
-			msg.Frame.Data[1],
-			msg.Frame.Data[2],
-			msg.Frame.Data[3],
-			msg.Frame.Data[4],
-			msg.Frame.Data[5],
-			msg.Frame.Data[6],
-			msg.Frame.Data[7],
+			msg.Frame.Data[:],
 		)
 
 		if err != nil {

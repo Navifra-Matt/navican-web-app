@@ -104,6 +104,10 @@ func (s *Server) setupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/clickhouse/count", s.clickhouseAPI.GetMessageCount)
 	mux.HandleFunc("/api/clickhouse/can_ids", s.clickhouseAPI.GetUniqueCANIDs)
 	mux.HandleFunc("/api/clickhouse/stats", s.clickhouseAPI.GetStatsByCANID)
+	
+	// CANopen endpoints
+	mux.HandleFunc("/api/clickhouse/canopen/messages", s.clickhouseAPI.GetCANopenMessages)
+	mux.HandleFunc("/api/clickhouse/canopen/stats", s.clickhouseAPI.GetCANopenStats)
 
 	// InfluxDB endpoints
 	mux.HandleFunc("/api/influxdb/messages", s.influxdbAPI.GetMessages)
@@ -134,6 +138,10 @@ func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 				"count":    "/api/clickhouse/count?start_time=2024-01-01T00:00:00Z&can_id=0x123",
 				"can_ids":  "/api/clickhouse/can_ids",
 				"stats":    "/api/clickhouse/stats?limit=10",
+			},
+			"canopen": map[string]string{
+				"messages": "/api/clickhouse/canopen/messages?message_type=pdo&start_time=2024-01-01T00:00:00Z&interface=can0&limit=100",
+				"stats":    "/api/clickhouse/canopen/stats?start_time=2024-01-01T00:00:00Z&interface=can0",
 			},
 			"influxdb": map[string]string{
 				"messages": "/api/influxdb/messages?start_time=2024-01-01T00:00:00Z&end_time=2024-01-02T00:00:00Z&can_id=0x123&interface=can0&limit=100",

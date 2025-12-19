@@ -3,14 +3,12 @@ package can
 import (
 	"can-db-writer/internal/models"
 	"fmt"
-	"os/exec"
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
+
+	"github.com/vishvananda/netlink"
 )
 
-// StatsCollector collects SocketCAN interface statistics
+// StatsCollector collects SocketCAN interface statistics using netlink
 type StatsCollector struct {
 	interfaceName string
 	interval      time.Duration
@@ -62,9 +60,9 @@ func (sc *StatsCollector) collectLoop() {
 	}
 }
 
-// collect gathers statistics from the CAN interface
+// collect gathers statistics from the CAN interface using netlink
 func (sc *StatsCollector) collect() {
-	stats, err := sc.parseIPStats()
+	stats, err := sc.getNetlinkStats()
 	if err != nil {
 		fmt.Printf("Failed to collect stats for %s: %v\n", sc.interfaceName, err)
 		return
@@ -80,180 +78,120 @@ func (sc *StatsCollector) collect() {
 	}
 }
 
-// parseIPStats parses the output of 'ip -details -statistics link show'
-func (sc *StatsCollector) parseIPStats() (models.SocketCANStats, error) {
-	cmd := exec.Command("ip", "-details", "-statistics", "link", "show", sc.interfaceName)
-	output, err := cmd.CombinedOutput()
+// getNetlinkStats retrieves statistics using netlink library
+func (sc *StatsCollector) getNetlinkStats() (models.SocketCANStats, error) {
+	stats := models.SocketCANStats{}
+
+	// Get link by name
+	link, err := netlink.LinkByName(sc.interfaceName)
 	if err != nil {
-		return models.SocketCANStats{}, fmt.Errorf("failed to execute ip command: %w (output: %s)", err, string(output))
+		return stats, fmt.Errorf("failed to get link %s: %w", sc.interfaceName, err)
 	}
 
-	return parseIPOutput(string(output))
-}
+	attrs := link.Attrs()
+	if attrs == nil {
+		return stats, fmt.Errorf("link attributes are nil")
+	}
 
-// parseIPOutput parses the text output from ip command
-func parseIPOutput(output string) (models.SocketCANStats, error) {
-	stats := models.SocketCANStats{}
-	lines := strings.Split(output, "\n")
+	// Basic interface info
+	stats.MTU = attrs.MTU
+	stats.QueueLength = attrs.TxQLen
 
-	for i, line := range lines {
-		line = strings.TrimSpace(line)
+	// Interface state
+	if attrs.OperState == netlink.OperUp {
+		stats.State = "UP"
+	} else {
+		stats.State = "DOWN"
+	}
 
-		// Parse basic interface info (line 0)
-		if i == 0 {
-			// Example: "3: can0: <NOARP,UP,LOWER_UP,ECHO> mtu 16 qdisc pfifo_fast state UP mode DEFAULT group default qlen 10"
-			if matches := regexp.MustCompile(`<([^>]+)>`).FindStringSubmatch(line); len(matches) > 1 {
-				if strings.Contains(matches[1], "UP") {
-					stats.State = "UP"
-				} else {
-					stats.State = "DOWN"
-				}
-			}
+	// Link statistics
+	if linkStats := attrs.Statistics; linkStats != nil {
+		// RX statistics
+		stats.RXPackets = linkStats.RxPackets
+		stats.RXBytes = linkStats.RxBytes
+		stats.RXErrors = linkStats.RxErrors
+		stats.RXDropped = linkStats.RxDropped
+		stats.RXOverErrors = linkStats.RxOverErrors
+		stats.RXCRCErrors = linkStats.RxCrcErrors
+		stats.RXFrameErrors = linkStats.RxFrameErrors
+		stats.RXFIFOErrors = linkStats.RxFifoErrors
+		stats.RXMissed = linkStats.RxMissedErrors
 
-			if matches := regexp.MustCompile(`mtu (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.MTU, _ = strconv.Atoi(matches[1])
-			}
+		// TX statistics
+		stats.TXPackets = linkStats.TxPackets
+		stats.TXBytes = linkStats.TxBytes
+		stats.TXErrors = linkStats.TxErrors
+		stats.TXDropped = linkStats.TxDropped
+		stats.TXAbortedErrors = linkStats.TxAbortedErrors
+		stats.TXCarrierErrors = linkStats.TxCarrierErrors
+		stats.TXFIFOErrors = linkStats.TxFifoErrors
+		stats.TXHeartbeatErrors = linkStats.TxHeartbeatErrors
+		stats.TXWindowErrors = linkStats.TxWindowErrors
 
-			if matches := regexp.MustCompile(`qlen (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.QueueLength, _ = strconv.Atoi(matches[1])
-			}
+		// Other statistics
+		stats.Collisions = linkStats.Collisions
+	}
+
+	// CAN-specific parameters (requires type assertion to *netlink.Can)
+	if canLink, ok := link.(*netlink.Can); ok {
+		stats.Bitrate = int(canLink.BitRate)
+		stats.RestartMS = int(canLink.RestartMs)
+
+		// Error counters
+		stats.TXErrorCounter = int(canLink.TxError)
+		stats.RXErrorCounter = int(canLink.RxError)
+
+		// CAN state (custom mapping based on state value)
+		switch canLink.State {
+		case 0:
+			stats.BusState = "ERROR-ACTIVE"
+		case 1:
+			stats.BusState = "ERROR-WARNING"
+		case 2:
+			stats.BusState = "ERROR-PASSIVE"
+		case 3:
+			stats.BusState = "BUS-OFF"
+		case 4:
+			stats.BusState = "STOPPED"
+		case 5:
+			stats.BusState = "SLEEPING"
+		default:
+			stats.BusState = fmt.Sprintf("UNKNOWN(%d)", canLink.State)
 		}
 
-		// Parse CAN-specific parameters
-		if strings.Contains(line, "bitrate") {
-			// Example: "can state ERROR-ACTIVE (berr-counter tx 0 rx 0) restart-ms 0"
-			// or: "bitrate 500000 sample-point 0.875"
-			if matches := regexp.MustCompile(`bitrate (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.Bitrate, _ = strconv.Atoi(matches[1])
-			}
+		// Control mode flags
+		const (
+			CAN_CTRLMODE_LOOPBACK    = 0x01
+			CAN_CTRLMODE_LISTENONLY  = 0x02
+		)
 
-			if matches := regexp.MustCompile(`sample-point ([\d.]+)`).FindStringSubmatch(line); len(matches) > 1 {
-				samplePoint, _ := strconv.ParseFloat(matches[1], 64)
-				stats.SamplePoint = fmt.Sprintf("%.1f%%", samplePoint*100)
-			}
-		}
-
-		// Parse CAN state and error counters
-		if strings.Contains(line, "can state") || strings.Contains(line, "can ") {
-			// Example: "can state ERROR-ACTIVE (berr-counter tx 0 rx 0) restart-ms 0"
-			if matches := regexp.MustCompile(`state ([A-Z-]+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.BusState = matches[1]
-			}
-
-			if matches := regexp.MustCompile(`berr-counter tx (\d+) rx (\d+)`).FindStringSubmatch(line); len(matches) > 2 {
-				stats.TXErrorCounter, _ = strconv.Atoi(matches[1])
-				stats.RXErrorCounter, _ = strconv.Atoi(matches[2])
-			}
-
-			if matches := regexp.MustCompile(`restart-ms (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.RestartMS, _ = strconv.Atoi(matches[1])
-			}
-		}
-
-		// Parse timing parameters
-		if strings.Contains(line, "tq") && strings.Contains(line, "prop-seg") {
-			// Example: "tq 125 prop-seg 6 phase-seg1 7 phase-seg2 2 sjw 1"
-			if matches := regexp.MustCompile(`tq (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.TimeQuanta, _ = strconv.Atoi(matches[1])
-			}
-
-			if matches := regexp.MustCompile(`prop-seg (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.PropSeg, _ = strconv.Atoi(matches[1])
-			}
-
-			if matches := regexp.MustCompile(`phase-seg1 (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.PhaseSeg1, _ = strconv.Atoi(matches[1])
-			}
-
-			if matches := regexp.MustCompile(`phase-seg2 (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.PhaseSeg2, _ = strconv.Atoi(matches[1])
-			}
-
-			if matches := regexp.MustCompile(`sjw (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.SJW, _ = strconv.Atoi(matches[1])
-			}
-
-			if matches := regexp.MustCompile(`brp (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.BRP, _ = strconv.Atoi(matches[1])
-			}
-		}
-
-		// Parse controller mode
-		if strings.Contains(line, "LOOPBACK") {
+		if canLink.Flags&CAN_CTRLMODE_LOOPBACK != 0 {
 			stats.ControllerMode = "LOOPBACK"
-		} else if strings.Contains(line, "LISTEN-ONLY") {
+		} else if canLink.Flags&CAN_CTRLMODE_LISTENONLY != 0 {
 			stats.ControllerMode = "LISTEN-ONLY"
+		} else {
+			stats.ControllerMode = "NORMAL"
 		}
 
-		// Parse RX statistics
-		if strings.Contains(line, "RX:") {
-			// Example: "RX: bytes  packets  errors  dropped overrun mcast"
-			// Next line: "123456    789      0       0       0       0"
-			if i+1 < len(lines) {
-				nextLine := strings.Fields(lines[i+1])
-				if len(nextLine) >= 6 {
-					stats.RXBytes, _ = strconv.ParseUint(nextLine[0], 10, 64)
-					stats.RXPackets, _ = strconv.ParseUint(nextLine[1], 10, 64)
-					stats.RXErrors, _ = strconv.ParseUint(nextLine[2], 10, 64)
-					stats.RXDropped, _ = strconv.ParseUint(nextLine[3], 10, 64)
-					stats.RXOverErrors, _ = strconv.ParseUint(nextLine[4], 10, 64)
-				}
-			}
-		}
+		// Bit timing parameters
+		stats.BRP = int(canLink.BitRatePreScaler)
+		stats.PropSeg = int(canLink.PropagationSegment)
+		stats.PhaseSeg1 = int(canLink.PhaseSegment1)
+		stats.PhaseSeg2 = int(canLink.PhaseSegment2)
+		stats.SJW = int(canLink.SyncJumpWidth)
+		stats.TimeQuanta = int(canLink.TimeQuanta)
 
-		// Parse TX statistics
-		if strings.Contains(line, "TX:") {
-			// Example: "TX: bytes  packets  errors  dropped carrier collsns"
-			// Next line: "654321    987      0       0       0       0"
-			if i+1 < len(lines) {
-				nextLine := strings.Fields(lines[i+1])
-				if len(nextLine) >= 6 {
-					stats.TXBytes, _ = strconv.ParseUint(nextLine[0], 10, 64)
-					stats.TXPackets, _ = strconv.ParseUint(nextLine[1], 10, 64)
-					stats.TXErrors, _ = strconv.ParseUint(nextLine[2], 10, 64)
-					stats.TXDropped, _ = strconv.ParseUint(nextLine[3], 10, 64)
-					stats.TXCarrierErrors, _ = strconv.ParseUint(nextLine[4], 10, 64)
-					stats.Collisions, _ = strconv.ParseUint(nextLine[5], 10, 64)
-				}
-			}
-		}
-
-		// Parse CAN-specific error statistics
-		if strings.Contains(line, "re-started") {
-			// Example: "re-started 0"
-			if matches := regexp.MustCompile(`re-started (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.BusOffRestarts, _ = strconv.ParseUint(matches[1], 10, 64)
-			}
-		}
-
-		if strings.Contains(line, "bus-error") {
-			// Example: "bus-error 5"
-			if matches := regexp.MustCompile(`bus-error (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.BusErrorCounter, _ = strconv.Atoi(matches[1])
-			}
-		}
-
-		if strings.Contains(line, "arbitration-lost") {
-			if matches := regexp.MustCompile(`arbitration-lost (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.ArbitrationLost, _ = strconv.ParseUint(matches[1], 10, 64)
-			}
-		}
-
-		if strings.Contains(line, "error-warning") {
-			if matches := regexp.MustCompile(`error-warning (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.ErrorWarning, _ = strconv.ParseUint(matches[1], 10, 64)
-			}
-		}
-
-		if strings.Contains(line, "error-passive") {
-			if matches := regexp.MustCompile(`error-passive (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.ErrorPassive, _ = strconv.ParseUint(matches[1], 10, 64)
-			}
-		}
-
-		if strings.Contains(line, "bus-off") {
-			if matches := regexp.MustCompile(`bus-off (\d+)`).FindStringSubmatch(line); len(matches) > 1 {
-				stats.BusOff, _ = strconv.ParseUint(matches[1], 10, 64)
+		// Sample point
+		if canLink.SamplePoint > 0 {
+			// SamplePoint is already in percentage * 10 (e.g., 875 for 87.5%)
+			stats.SamplePoint = fmt.Sprintf("%.1f%%", float64(canLink.SamplePoint)/10.0)
+		} else if stats.PropSeg > 0 || stats.PhaseSeg1 > 0 || stats.PhaseSeg2 > 0 {
+			// Calculate if not provided
+			totalTq := 1 + stats.PropSeg + stats.PhaseSeg1 + stats.PhaseSeg2
+			if totalTq > 0 {
+				samplePointTq := 1 + stats.PropSeg + stats.PhaseSeg1
+				samplePoint := float64(samplePointTq) / float64(totalTq) * 100.0
+				stats.SamplePoint = fmt.Sprintf("%.1f%%", samplePoint)
 			}
 		}
 	}
