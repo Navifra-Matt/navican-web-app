@@ -13,6 +13,7 @@ import (
 // Server represents the HTTP API server
 type Server struct {
 	server        *http.Server
+	grpcServer    *GRPCServer
 	clickhouseAPI *ClickHouseAPI
 	influxdbAPI   *InfluxDBAPI
 	statsAPI      *StatsAPI
@@ -21,6 +22,7 @@ type Server struct {
 // ServerConfig holds API server configuration
 type ServerConfig struct {
 	Port             int
+	GRPCPort         int
 	CHHost           string
 	CHPort           int
 	CHDatabase       string
@@ -71,10 +73,21 @@ func NewServer(config ServerConfig) (*Server, error) {
 
 	statsAPI := NewStatsAPI(chConn, config.CHStatsTable)
 
+	// Create gRPC server if port is specified
+	var grpcServer *GRPCServer
+	if config.GRPCPort > 0 {
+		var err error
+		grpcServer, err = NewGRPCServer(config.GRPCPort, chConn, config.CHTable)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create gRPC server: %w", err)
+		}
+	}
+
 	server := &Server{
 		clickhouseAPI: clickhouseAPI,
 		influxdbAPI:   influxdbAPI,
 		statsAPI:      statsAPI,
+		grpcServer:    grpcServer,
 	}
 
 	// Setup HTTP router
@@ -177,13 +190,28 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 
 // Start starts the API server
 func (s *Server) Start() error {
-	log.Printf("Starting API server on %s", s.server.Addr)
+	// Start gRPC server in background if configured
+	if s.grpcServer != nil {
+		go func() {
+			if err := s.grpcServer.Start(); err != nil {
+				log.Printf("gRPC server error: %v", err)
+			}
+		}()
+	}
+
+	log.Printf("Starting HTTP API server on %s", s.server.Addr)
 	return s.server.ListenAndServe()
 }
 
 // Stop gracefully stops the API server
 func (s *Server) Stop(ctx context.Context) error {
 	log.Println("Stopping API server...")
+
+	// Stop gRPC server if running
+	if s.grpcServer != nil {
+		s.grpcServer.Stop()
+	}
+
 	return s.server.Shutdown(ctx)
 }
 

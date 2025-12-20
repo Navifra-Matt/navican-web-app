@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v5.28.3
-// source: api/proto/clickhouse.proto
+// source: internal/proto/can/can.proto
 
-package clickhouse
+package can
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -37,7 +37,7 @@ type QueryFilter struct {
 
 func (x *QueryFilter) Reset() {
 	*x = QueryFilter{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[0]
+	mi := &file_internal_proto_can_can_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -49,7 +49,7 @@ func (x *QueryFilter) String() string {
 func (*QueryFilter) ProtoMessage() {}
 
 func (x *QueryFilter) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[0]
+	mi := &file_internal_proto_can_can_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -62,7 +62,7 @@ func (x *QueryFilter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryFilter.ProtoReflect.Descriptor instead.
 func (*QueryFilter) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{0}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *QueryFilter) GetStartTime() *timestamppb.Timestamp {
@@ -121,7 +121,7 @@ type CANMessage struct {
 
 func (x *CANMessage) Reset() {
 	*x = CANMessage{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[1]
+	mi := &file_internal_proto_can_can_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -133,7 +133,7 @@ func (x *CANMessage) String() string {
 func (*CANMessage) ProtoMessage() {}
 
 func (x *CANMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[1]
+	mi := &file_internal_proto_can_can_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -146,7 +146,7 @@ func (x *CANMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CANMessage.ProtoReflect.Descriptor instead.
 func (*CANMessage) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{1}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CANMessage) GetTimestamp() *timestamppb.Timestamp {
@@ -194,7 +194,7 @@ type GetMessagesRequest struct {
 
 func (x *GetMessagesRequest) Reset() {
 	*x = GetMessagesRequest{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[2]
+	mi := &file_internal_proto_can_can_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -206,7 +206,7 @@ func (x *GetMessagesRequest) String() string {
 func (*GetMessagesRequest) ProtoMessage() {}
 
 func (x *GetMessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[2]
+	mi := &file_internal_proto_can_can_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -219,7 +219,7 @@ func (x *GetMessagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMessagesRequest.ProtoReflect.Descriptor instead.
 func (*GetMessagesRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{2}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetMessagesRequest) GetFilter() *QueryFilter {
@@ -238,7 +238,7 @@ type GetMessagesResponse struct {
 
 func (x *GetMessagesResponse) Reset() {
 	*x = GetMessagesResponse{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[3]
+	mi := &file_internal_proto_can_can_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -250,7 +250,7 @@ func (x *GetMessagesResponse) String() string {
 func (*GetMessagesResponse) ProtoMessage() {}
 
 func (x *GetMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[3]
+	mi := &file_internal_proto_can_can_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -263,7 +263,7 @@ func (x *GetMessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMessagesResponse.ProtoReflect.Descriptor instead.
 func (*GetMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{3}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetMessagesResponse) GetMessages() []*CANMessage {
@@ -283,7 +283,7 @@ type GetMessageCountRequest struct {
 
 func (x *GetMessageCountRequest) Reset() {
 	*x = GetMessageCountRequest{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[4]
+	mi := &file_internal_proto_can_can_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -295,7 +295,7 @@ func (x *GetMessageCountRequest) String() string {
 func (*GetMessageCountRequest) ProtoMessage() {}
 
 func (x *GetMessageCountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[4]
+	mi := &file_internal_proto_can_can_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -308,7 +308,7 @@ func (x *GetMessageCountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMessageCountRequest.ProtoReflect.Descriptor instead.
 func (*GetMessageCountRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{4}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetMessageCountRequest) GetFilter() *QueryFilter {
@@ -327,7 +327,7 @@ type GetMessageCountResponse struct {
 
 func (x *GetMessageCountResponse) Reset() {
 	*x = GetMessageCountResponse{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[5]
+	mi := &file_internal_proto_can_can_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -339,7 +339,7 @@ func (x *GetMessageCountResponse) String() string {
 func (*GetMessageCountResponse) ProtoMessage() {}
 
 func (x *GetMessageCountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[5]
+	mi := &file_internal_proto_can_can_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -352,7 +352,7 @@ func (x *GetMessageCountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMessageCountResponse.ProtoReflect.Descriptor instead.
 func (*GetMessageCountResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{5}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetMessageCountResponse) GetCount() uint64 {
@@ -372,7 +372,7 @@ type GetUniqueCANIDsRequest struct {
 
 func (x *GetUniqueCANIDsRequest) Reset() {
 	*x = GetUniqueCANIDsRequest{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[6]
+	mi := &file_internal_proto_can_can_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -384,7 +384,7 @@ func (x *GetUniqueCANIDsRequest) String() string {
 func (*GetUniqueCANIDsRequest) ProtoMessage() {}
 
 func (x *GetUniqueCANIDsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[6]
+	mi := &file_internal_proto_can_can_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -397,7 +397,7 @@ func (x *GetUniqueCANIDsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUniqueCANIDsRequest.ProtoReflect.Descriptor instead.
 func (*GetUniqueCANIDsRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{6}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetUniqueCANIDsRequest) GetFilter() *QueryFilter {
@@ -417,7 +417,7 @@ type CANIDInfo struct {
 
 func (x *CANIDInfo) Reset() {
 	*x = CANIDInfo{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[7]
+	mi := &file_internal_proto_can_can_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -429,7 +429,7 @@ func (x *CANIDInfo) String() string {
 func (*CANIDInfo) ProtoMessage() {}
 
 func (x *CANIDInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[7]
+	mi := &file_internal_proto_can_can_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -442,7 +442,7 @@ func (x *CANIDInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CANIDInfo.ProtoReflect.Descriptor instead.
 func (*CANIDInfo) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{7}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *CANIDInfo) GetCanId() uint32 {
@@ -468,7 +468,7 @@ type GetUniqueCANIDsResponse struct {
 
 func (x *GetUniqueCANIDsResponse) Reset() {
 	*x = GetUniqueCANIDsResponse{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[8]
+	mi := &file_internal_proto_can_can_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -480,7 +480,7 @@ func (x *GetUniqueCANIDsResponse) String() string {
 func (*GetUniqueCANIDsResponse) ProtoMessage() {}
 
 func (x *GetUniqueCANIDsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[8]
+	mi := &file_internal_proto_can_can_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -493,7 +493,7 @@ func (x *GetUniqueCANIDsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUniqueCANIDsResponse.ProtoReflect.Descriptor instead.
 func (*GetUniqueCANIDsResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{8}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetUniqueCANIDsResponse) GetCanIds() []*CANIDInfo {
@@ -513,7 +513,7 @@ type GetStatsByCANIDRequest struct {
 
 func (x *GetStatsByCANIDRequest) Reset() {
 	*x = GetStatsByCANIDRequest{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[9]
+	mi := &file_internal_proto_can_can_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -525,7 +525,7 @@ func (x *GetStatsByCANIDRequest) String() string {
 func (*GetStatsByCANIDRequest) ProtoMessage() {}
 
 func (x *GetStatsByCANIDRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[9]
+	mi := &file_internal_proto_can_can_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -538,7 +538,7 @@ func (x *GetStatsByCANIDRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatsByCANIDRequest.ProtoReflect.Descriptor instead.
 func (*GetStatsByCANIDRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{9}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetStatsByCANIDRequest) GetFilter() *QueryFilter {
@@ -561,7 +561,7 @@ type CANIDStats struct {
 
 func (x *CANIDStats) Reset() {
 	*x = CANIDStats{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[10]
+	mi := &file_internal_proto_can_can_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -573,7 +573,7 @@ func (x *CANIDStats) String() string {
 func (*CANIDStats) ProtoMessage() {}
 
 func (x *CANIDStats) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[10]
+	mi := &file_internal_proto_can_can_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -586,7 +586,7 @@ func (x *CANIDStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CANIDStats.ProtoReflect.Descriptor instead.
 func (*CANIDStats) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{10}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CANIDStats) GetCanId() uint32 {
@@ -633,7 +633,7 @@ type GetStatsByCANIDResponse struct {
 
 func (x *GetStatsByCANIDResponse) Reset() {
 	*x = GetStatsByCANIDResponse{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[11]
+	mi := &file_internal_proto_can_can_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -645,7 +645,7 @@ func (x *GetStatsByCANIDResponse) String() string {
 func (*GetStatsByCANIDResponse) ProtoMessage() {}
 
 func (x *GetStatsByCANIDResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[11]
+	mi := &file_internal_proto_can_can_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -658,7 +658,7 @@ func (x *GetStatsByCANIDResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatsByCANIDResponse.ProtoReflect.Descriptor instead.
 func (*GetStatsByCANIDResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{11}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetStatsByCANIDResponse) GetStats() []*CANIDStats {
@@ -681,7 +681,7 @@ type GetCANopenMessagesRequest struct {
 
 func (x *GetCANopenMessagesRequest) Reset() {
 	*x = GetCANopenMessagesRequest{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[12]
+	mi := &file_internal_proto_can_can_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -693,7 +693,7 @@ func (x *GetCANopenMessagesRequest) String() string {
 func (*GetCANopenMessagesRequest) ProtoMessage() {}
 
 func (x *GetCANopenMessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[12]
+	mi := &file_internal_proto_can_can_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -706,7 +706,7 @@ func (x *GetCANopenMessagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCANopenMessagesRequest.ProtoReflect.Descriptor instead.
 func (*GetCANopenMessagesRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{12}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetCANopenMessagesRequest) GetFilter() *QueryFilter {
@@ -753,7 +753,7 @@ type CANopenMessage struct {
 
 func (x *CANopenMessage) Reset() {
 	*x = CANopenMessage{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[13]
+	mi := &file_internal_proto_can_can_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -765,7 +765,7 @@ func (x *CANopenMessage) String() string {
 func (*CANopenMessage) ProtoMessage() {}
 
 func (x *CANopenMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[13]
+	mi := &file_internal_proto_can_can_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -778,7 +778,7 @@ func (x *CANopenMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CANopenMessage.ProtoReflect.Descriptor instead.
 func (*CANopenMessage) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{13}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *CANopenMessage) GetTimestamp() *timestamppb.Timestamp {
@@ -846,7 +846,7 @@ type GetCANopenMessagesResponse struct {
 
 func (x *GetCANopenMessagesResponse) Reset() {
 	*x = GetCANopenMessagesResponse{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[14]
+	mi := &file_internal_proto_can_can_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -858,7 +858,7 @@ func (x *GetCANopenMessagesResponse) String() string {
 func (*GetCANopenMessagesResponse) ProtoMessage() {}
 
 func (x *GetCANopenMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[14]
+	mi := &file_internal_proto_can_can_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -871,7 +871,7 @@ func (x *GetCANopenMessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCANopenMessagesResponse.ProtoReflect.Descriptor instead.
 func (*GetCANopenMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{14}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetCANopenMessagesResponse) GetMessages() []*CANopenMessage {
@@ -891,7 +891,7 @@ type GetCANopenStatsRequest struct {
 
 func (x *GetCANopenStatsRequest) Reset() {
 	*x = GetCANopenStatsRequest{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[15]
+	mi := &file_internal_proto_can_can_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -903,7 +903,7 @@ func (x *GetCANopenStatsRequest) String() string {
 func (*GetCANopenStatsRequest) ProtoMessage() {}
 
 func (x *GetCANopenStatsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[15]
+	mi := &file_internal_proto_can_can_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -916,7 +916,7 @@ func (x *GetCANopenStatsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCANopenStatsRequest.ProtoReflect.Descriptor instead.
 func (*GetCANopenStatsRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{15}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetCANopenStatsRequest) GetFilter() *QueryFilter {
@@ -938,7 +938,7 @@ type CANopenMessageTypeStats struct {
 
 func (x *CANopenMessageTypeStats) Reset() {
 	*x = CANopenMessageTypeStats{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[16]
+	mi := &file_internal_proto_can_can_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -950,7 +950,7 @@ func (x *CANopenMessageTypeStats) String() string {
 func (*CANopenMessageTypeStats) ProtoMessage() {}
 
 func (x *CANopenMessageTypeStats) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[16]
+	mi := &file_internal_proto_can_can_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -963,7 +963,7 @@ func (x *CANopenMessageTypeStats) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CANopenMessageTypeStats.ProtoReflect.Descriptor instead.
 func (*CANopenMessageTypeStats) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{16}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CANopenMessageTypeStats) GetMessageType() string {
@@ -1003,7 +1003,7 @@ type GetCANopenStatsResponse struct {
 
 func (x *GetCANopenStatsResponse) Reset() {
 	*x = GetCANopenStatsResponse{}
-	mi := &file_api_proto_clickhouse_proto_msgTypes[17]
+	mi := &file_internal_proto_can_can_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1015,7 +1015,7 @@ func (x *GetCANopenStatsResponse) String() string {
 func (*GetCANopenStatsResponse) ProtoMessage() {}
 
 func (x *GetCANopenStatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_clickhouse_proto_msgTypes[17]
+	mi := &file_internal_proto_can_can_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1028,7 +1028,7 @@ func (x *GetCANopenStatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCANopenStatsResponse.ProtoReflect.Descriptor instead.
 func (*GetCANopenStatsResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_clickhouse_proto_rawDescGZIP(), []int{17}
+	return file_internal_proto_can_can_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetCANopenStatsResponse) GetStats() []*CANopenMessageTypeStats {
@@ -1038,12 +1038,11 @@ func (x *GetCANopenStatsResponse) GetStats() []*CANopenMessageTypeStats {
 	return nil
 }
 
-var File_api_proto_clickhouse_proto protoreflect.FileDescriptor
+var File_internal_proto_can_can_proto protoreflect.FileDescriptor
 
-const file_api_proto_clickhouse_proto_rawDesc = "" +
+const file_internal_proto_can_can_proto_rawDesc = "" +
 	"\n" +
-	"\x1aapi/proto/clickhouse.proto\x12\n" +
-	"clickhouse\x1a\x1fgoogle/protobuf/timestamp.proto\"\x98\x02\n" +
+	"\x1cinternal/proto/can/can.proto\x12\x05proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x98\x02\n" +
 	"\vQueryFilter\x12>\n" +
 	"\n" +
 	"start_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\tstartTime\x88\x01\x01\x12:\n" +
@@ -1062,25 +1061,25 @@ const file_api_proto_clickhouse_proto_rawDesc = "" +
 	"\x06can_id\x18\x03 \x01(\rR\x05canId\x12\x1c\n" +
 	"\n" +
 	"can_id_hex\x18\x04 \x01(\tR\bcanIdHex\x12\x12\n" +
-	"\x04data\x18\x05 \x01(\fR\x04data\"E\n" +
-	"\x12GetMessagesRequest\x12/\n" +
-	"\x06filter\x18\x01 \x01(\v2\x17.clickhouse.QueryFilterR\x06filter\"I\n" +
-	"\x13GetMessagesResponse\x122\n" +
-	"\bmessages\x18\x01 \x03(\v2\x16.clickhouse.CANMessageR\bmessages\"I\n" +
-	"\x16GetMessageCountRequest\x12/\n" +
-	"\x06filter\x18\x01 \x01(\v2\x17.clickhouse.QueryFilterR\x06filter\"/\n" +
+	"\x04data\x18\x05 \x01(\fR\x04data\"@\n" +
+	"\x12GetMessagesRequest\x12*\n" +
+	"\x06filter\x18\x01 \x01(\v2\x12.proto.QueryFilterR\x06filter\"D\n" +
+	"\x13GetMessagesResponse\x12-\n" +
+	"\bmessages\x18\x01 \x03(\v2\x11.proto.CANMessageR\bmessages\"D\n" +
+	"\x16GetMessageCountRequest\x12*\n" +
+	"\x06filter\x18\x01 \x01(\v2\x12.proto.QueryFilterR\x06filter\"/\n" +
 	"\x17GetMessageCountResponse\x12\x14\n" +
-	"\x05count\x18\x01 \x01(\x04R\x05count\"I\n" +
-	"\x16GetUniqueCANIDsRequest\x12/\n" +
-	"\x06filter\x18\x01 \x01(\v2\x17.clickhouse.QueryFilterR\x06filter\"@\n" +
+	"\x05count\x18\x01 \x01(\x04R\x05count\"D\n" +
+	"\x16GetUniqueCANIDsRequest\x12*\n" +
+	"\x06filter\x18\x01 \x01(\v2\x12.proto.QueryFilterR\x06filter\"@\n" +
 	"\tCANIDInfo\x12\x15\n" +
 	"\x06can_id\x18\x01 \x01(\rR\x05canId\x12\x1c\n" +
 	"\n" +
-	"can_id_hex\x18\x02 \x01(\tR\bcanIdHex\"I\n" +
-	"\x17GetUniqueCANIDsResponse\x12.\n" +
-	"\acan_ids\x18\x01 \x03(\v2\x15.clickhouse.CANIDInfoR\x06canIds\"I\n" +
-	"\x16GetStatsByCANIDRequest\x12/\n" +
-	"\x06filter\x18\x01 \x01(\v2\x17.clickhouse.QueryFilterR\x06filter\"\xda\x01\n" +
+	"can_id_hex\x18\x02 \x01(\tR\bcanIdHex\"D\n" +
+	"\x17GetUniqueCANIDsResponse\x12)\n" +
+	"\acan_ids\x18\x01 \x03(\v2\x10.proto.CANIDInfoR\x06canIds\"D\n" +
+	"\x16GetStatsByCANIDRequest\x12*\n" +
+	"\x06filter\x18\x01 \x01(\v2\x12.proto.QueryFilterR\x06filter\"\xda\x01\n" +
 	"\n" +
 	"CANIDStats\x12\x15\n" +
 	"\x06can_id\x18\x01 \x01(\rR\x05canId\x12\x1c\n" +
@@ -1089,19 +1088,19 @@ const file_api_proto_clickhouse_proto_rawDesc = "" +
 	"\rmessage_count\x18\x03 \x01(\x04R\fmessageCount\x129\n" +
 	"\n" +
 	"first_seen\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tfirstSeen\x127\n" +
-	"\tlast_seen\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\blastSeen\"G\n" +
-	"\x17GetStatsByCANIDResponse\x12,\n" +
-	"\x05stats\x18\x01 \x03(\v2\x16.clickhouse.CANIDStatsR\x05stats\"\xb4\x02\n" +
-	"\x19GetCANopenMessagesRequest\x12/\n" +
-	"\x06filter\x18\x01 \x01(\v2\x17.clickhouse.QueryFilterR\x06filter\x12!\n" +
+	"\tlast_seen\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\blastSeen\"B\n" +
+	"\x17GetStatsByCANIDResponse\x12'\n" +
+	"\x05stats\x18\x01 \x03(\v2\x11.proto.CANIDStatsR\x05stats\"\xaa\x02\n" +
+	"\x19GetCANopenMessagesRequest\x12*\n" +
+	"\x06filter\x18\x01 \x01(\v2\x12.proto.QueryFilterR\x06filter\x12!\n" +
 	"\fmessage_type\x18\x02 \x01(\tR\vmessageType\x12\x1c\n" +
-	"\anode_id\x18\x03 \x01(\rH\x00R\x06nodeId\x88\x01\x01\x12Y\n" +
-	"\fpdo_mappings\x18\x04 \x03(\v26.clickhouse.GetCANopenMessagesRequest.PdoMappingsEntryR\vpdoMappings\x1a>\n" +
+	"\anode_id\x18\x03 \x01(\rH\x00R\x06nodeId\x88\x01\x01\x12T\n" +
+	"\fpdo_mappings\x18\x04 \x03(\v21.proto.GetCANopenMessagesRequest.PdoMappingsEntryR\vpdoMappings\x1a>\n" +
 	"\x10PdoMappingsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\n" +
 	"\n" +
-	"\b_node_id\"\xf9\x02\n" +
+	"\b_node_id\"\xf4\x02\n" +
 	"\x0eCANopenMessage\x128\n" +
 	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x1c\n" +
 	"\tinterface\x18\x02 \x01(\tR\tinterface\x12\x15\n" +
@@ -1110,102 +1109,103 @@ const file_api_proto_clickhouse_proto_rawDesc = "" +
 	"can_id_hex\x18\x04 \x01(\tR\bcanIdHex\x12\x12\n" +
 	"\x04data\x18\x05 \x01(\fR\x04data\x12!\n" +
 	"\fmessage_type\x18\x06 \x01(\tR\vmessageType\x12\x17\n" +
-	"\anode_id\x18\a \x01(\rR\x06nodeId\x12K\n" +
-	"\vparsed_data\x18\b \x03(\v2*.clickhouse.CANopenMessage.ParsedDataEntryR\n" +
+	"\anode_id\x18\a \x01(\rR\x06nodeId\x12F\n" +
+	"\vparsed_data\x18\b \x03(\v2%.proto.CANopenMessage.ParsedDataEntryR\n" +
 	"parsedData\x1a=\n" +
 	"\x0fParsedDataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"T\n" +
-	"\x1aGetCANopenMessagesResponse\x126\n" +
-	"\bmessages\x18\x01 \x03(\v2\x1a.clickhouse.CANopenMessageR\bmessages\"I\n" +
-	"\x16GetCANopenStatsRequest\x12/\n" +
-	"\x06filter\x18\x01 \x01(\v2\x17.clickhouse.QueryFilterR\x06filter\"\xd5\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"O\n" +
+	"\x1aGetCANopenMessagesResponse\x121\n" +
+	"\bmessages\x18\x01 \x03(\v2\x15.proto.CANopenMessageR\bmessages\"D\n" +
+	"\x16GetCANopenStatsRequest\x12*\n" +
+	"\x06filter\x18\x01 \x01(\v2\x12.proto.QueryFilterR\x06filter\"\xd5\x01\n" +
 	"\x17CANopenMessageTypeStats\x12!\n" +
 	"\fmessage_type\x18\x01 \x01(\tR\vmessageType\x12#\n" +
 	"\rmessage_count\x18\x02 \x01(\x04R\fmessageCount\x129\n" +
 	"\n" +
 	"first_seen\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tfirstSeen\x127\n" +
-	"\tlast_seen\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\blastSeen\"T\n" +
-	"\x17GetCANopenStatsResponse\x129\n" +
-	"\x05stats\x18\x01 \x03(\v2#.clickhouse.CANopenMessageTypeStatsR\x05stats2\xb8\x04\n" +
-	"\x11ClickHouseService\x12N\n" +
-	"\vGetMessages\x12\x1e.clickhouse.GetMessagesRequest\x1a\x1f.clickhouse.GetMessagesResponse\x12Z\n" +
-	"\x0fGetMessageCount\x12\".clickhouse.GetMessageCountRequest\x1a#.clickhouse.GetMessageCountResponse\x12Z\n" +
-	"\x0fGetUniqueCANIDs\x12\".clickhouse.GetUniqueCANIDsRequest\x1a#.clickhouse.GetUniqueCANIDsResponse\x12Z\n" +
-	"\x0fGetStatsByCANID\x12\".clickhouse.GetStatsByCANIDRequest\x1a#.clickhouse.GetStatsByCANIDResponse\x12c\n" +
-	"\x12GetCANopenMessages\x12%.clickhouse.GetCANopenMessagesRequest\x1a&.clickhouse.GetCANopenMessagesResponse\x12Z\n" +
-	"\x0fGetCANopenStats\x12\".clickhouse.GetCANopenStatsRequest\x1a#.clickhouse.GetCANopenStatsResponseB$Z\"can-db-writer/api/proto/clickhouseb\x06proto3"
+	"\tlast_seen\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\blastSeen\"O\n" +
+	"\x17GetCANopenStatsResponse\x124\n" +
+	"\x05stats\x18\x01 \x03(\v2\x1e.proto.CANopenMessageTypeStatsR\x05stats2\xf5\x03\n" +
+	"\n" +
+	"canService\x12D\n" +
+	"\vGetMessages\x12\x19.proto.GetMessagesRequest\x1a\x1a.proto.GetMessagesResponse\x12P\n" +
+	"\x0fGetMessageCount\x12\x1d.proto.GetMessageCountRequest\x1a\x1e.proto.GetMessageCountResponse\x12P\n" +
+	"\x0fGetUniqueCANIDs\x12\x1d.proto.GetUniqueCANIDsRequest\x1a\x1e.proto.GetUniqueCANIDsResponse\x12P\n" +
+	"\x0fGetStatsByCANID\x12\x1d.proto.GetStatsByCANIDRequest\x1a\x1e.proto.GetStatsByCANIDResponse\x12Y\n" +
+	"\x12GetCANopenMessages\x12 .proto.GetCANopenMessagesRequest\x1a!.proto.GetCANopenMessagesResponse\x12P\n" +
+	"\x0fGetCANopenStats\x12\x1d.proto.GetCANopenStatsRequest\x1a\x1e.proto.GetCANopenStatsResponseB\"Z can-db-writer/internal/proto/canb\x06proto3"
 
 var (
-	file_api_proto_clickhouse_proto_rawDescOnce sync.Once
-	file_api_proto_clickhouse_proto_rawDescData []byte
+	file_internal_proto_can_can_proto_rawDescOnce sync.Once
+	file_internal_proto_can_can_proto_rawDescData []byte
 )
 
-func file_api_proto_clickhouse_proto_rawDescGZIP() []byte {
-	file_api_proto_clickhouse_proto_rawDescOnce.Do(func() {
-		file_api_proto_clickhouse_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_proto_clickhouse_proto_rawDesc), len(file_api_proto_clickhouse_proto_rawDesc)))
+func file_internal_proto_can_can_proto_rawDescGZIP() []byte {
+	file_internal_proto_can_can_proto_rawDescOnce.Do(func() {
+		file_internal_proto_can_can_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_internal_proto_can_can_proto_rawDesc), len(file_internal_proto_can_can_proto_rawDesc)))
 	})
-	return file_api_proto_clickhouse_proto_rawDescData
+	return file_internal_proto_can_can_proto_rawDescData
 }
 
-var file_api_proto_clickhouse_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
-var file_api_proto_clickhouse_proto_goTypes = []any{
-	(*QueryFilter)(nil),                // 0: clickhouse.QueryFilter
-	(*CANMessage)(nil),                 // 1: clickhouse.CANMessage
-	(*GetMessagesRequest)(nil),         // 2: clickhouse.GetMessagesRequest
-	(*GetMessagesResponse)(nil),        // 3: clickhouse.GetMessagesResponse
-	(*GetMessageCountRequest)(nil),     // 4: clickhouse.GetMessageCountRequest
-	(*GetMessageCountResponse)(nil),    // 5: clickhouse.GetMessageCountResponse
-	(*GetUniqueCANIDsRequest)(nil),     // 6: clickhouse.GetUniqueCANIDsRequest
-	(*CANIDInfo)(nil),                  // 7: clickhouse.CANIDInfo
-	(*GetUniqueCANIDsResponse)(nil),    // 8: clickhouse.GetUniqueCANIDsResponse
-	(*GetStatsByCANIDRequest)(nil),     // 9: clickhouse.GetStatsByCANIDRequest
-	(*CANIDStats)(nil),                 // 10: clickhouse.CANIDStats
-	(*GetStatsByCANIDResponse)(nil),    // 11: clickhouse.GetStatsByCANIDResponse
-	(*GetCANopenMessagesRequest)(nil),  // 12: clickhouse.GetCANopenMessagesRequest
-	(*CANopenMessage)(nil),             // 13: clickhouse.CANopenMessage
-	(*GetCANopenMessagesResponse)(nil), // 14: clickhouse.GetCANopenMessagesResponse
-	(*GetCANopenStatsRequest)(nil),     // 15: clickhouse.GetCANopenStatsRequest
-	(*CANopenMessageTypeStats)(nil),    // 16: clickhouse.CANopenMessageTypeStats
-	(*GetCANopenStatsResponse)(nil),    // 17: clickhouse.GetCANopenStatsResponse
-	nil,                                // 18: clickhouse.GetCANopenMessagesRequest.PdoMappingsEntry
-	nil,                                // 19: clickhouse.CANopenMessage.ParsedDataEntry
+var file_internal_proto_can_can_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_internal_proto_can_can_proto_goTypes = []any{
+	(*QueryFilter)(nil),                // 0: proto.QueryFilter
+	(*CANMessage)(nil),                 // 1: proto.CANMessage
+	(*GetMessagesRequest)(nil),         // 2: proto.GetMessagesRequest
+	(*GetMessagesResponse)(nil),        // 3: proto.GetMessagesResponse
+	(*GetMessageCountRequest)(nil),     // 4: proto.GetMessageCountRequest
+	(*GetMessageCountResponse)(nil),    // 5: proto.GetMessageCountResponse
+	(*GetUniqueCANIDsRequest)(nil),     // 6: proto.GetUniqueCANIDsRequest
+	(*CANIDInfo)(nil),                  // 7: proto.CANIDInfo
+	(*GetUniqueCANIDsResponse)(nil),    // 8: proto.GetUniqueCANIDsResponse
+	(*GetStatsByCANIDRequest)(nil),     // 9: proto.GetStatsByCANIDRequest
+	(*CANIDStats)(nil),                 // 10: proto.CANIDStats
+	(*GetStatsByCANIDResponse)(nil),    // 11: proto.GetStatsByCANIDResponse
+	(*GetCANopenMessagesRequest)(nil),  // 12: proto.GetCANopenMessagesRequest
+	(*CANopenMessage)(nil),             // 13: proto.CANopenMessage
+	(*GetCANopenMessagesResponse)(nil), // 14: proto.GetCANopenMessagesResponse
+	(*GetCANopenStatsRequest)(nil),     // 15: proto.GetCANopenStatsRequest
+	(*CANopenMessageTypeStats)(nil),    // 16: proto.CANopenMessageTypeStats
+	(*GetCANopenStatsResponse)(nil),    // 17: proto.GetCANopenStatsResponse
+	nil,                                // 18: proto.GetCANopenMessagesRequest.PdoMappingsEntry
+	nil,                                // 19: proto.CANopenMessage.ParsedDataEntry
 	(*timestamppb.Timestamp)(nil),      // 20: google.protobuf.Timestamp
 }
-var file_api_proto_clickhouse_proto_depIdxs = []int32{
-	20, // 0: clickhouse.QueryFilter.start_time:type_name -> google.protobuf.Timestamp
-	20, // 1: clickhouse.QueryFilter.end_time:type_name -> google.protobuf.Timestamp
-	20, // 2: clickhouse.CANMessage.timestamp:type_name -> google.protobuf.Timestamp
-	0,  // 3: clickhouse.GetMessagesRequest.filter:type_name -> clickhouse.QueryFilter
-	1,  // 4: clickhouse.GetMessagesResponse.messages:type_name -> clickhouse.CANMessage
-	0,  // 5: clickhouse.GetMessageCountRequest.filter:type_name -> clickhouse.QueryFilter
-	0,  // 6: clickhouse.GetUniqueCANIDsRequest.filter:type_name -> clickhouse.QueryFilter
-	7,  // 7: clickhouse.GetUniqueCANIDsResponse.can_ids:type_name -> clickhouse.CANIDInfo
-	0,  // 8: clickhouse.GetStatsByCANIDRequest.filter:type_name -> clickhouse.QueryFilter
-	20, // 9: clickhouse.CANIDStats.first_seen:type_name -> google.protobuf.Timestamp
-	20, // 10: clickhouse.CANIDStats.last_seen:type_name -> google.protobuf.Timestamp
-	10, // 11: clickhouse.GetStatsByCANIDResponse.stats:type_name -> clickhouse.CANIDStats
-	0,  // 12: clickhouse.GetCANopenMessagesRequest.filter:type_name -> clickhouse.QueryFilter
-	18, // 13: clickhouse.GetCANopenMessagesRequest.pdo_mappings:type_name -> clickhouse.GetCANopenMessagesRequest.PdoMappingsEntry
-	20, // 14: clickhouse.CANopenMessage.timestamp:type_name -> google.protobuf.Timestamp
-	19, // 15: clickhouse.CANopenMessage.parsed_data:type_name -> clickhouse.CANopenMessage.ParsedDataEntry
-	13, // 16: clickhouse.GetCANopenMessagesResponse.messages:type_name -> clickhouse.CANopenMessage
-	0,  // 17: clickhouse.GetCANopenStatsRequest.filter:type_name -> clickhouse.QueryFilter
-	20, // 18: clickhouse.CANopenMessageTypeStats.first_seen:type_name -> google.protobuf.Timestamp
-	20, // 19: clickhouse.CANopenMessageTypeStats.last_seen:type_name -> google.protobuf.Timestamp
-	16, // 20: clickhouse.GetCANopenStatsResponse.stats:type_name -> clickhouse.CANopenMessageTypeStats
-	2,  // 21: clickhouse.ClickHouseService.GetMessages:input_type -> clickhouse.GetMessagesRequest
-	4,  // 22: clickhouse.ClickHouseService.GetMessageCount:input_type -> clickhouse.GetMessageCountRequest
-	6,  // 23: clickhouse.ClickHouseService.GetUniqueCANIDs:input_type -> clickhouse.GetUniqueCANIDsRequest
-	9,  // 24: clickhouse.ClickHouseService.GetStatsByCANID:input_type -> clickhouse.GetStatsByCANIDRequest
-	12, // 25: clickhouse.ClickHouseService.GetCANopenMessages:input_type -> clickhouse.GetCANopenMessagesRequest
-	15, // 26: clickhouse.ClickHouseService.GetCANopenStats:input_type -> clickhouse.GetCANopenStatsRequest
-	3,  // 27: clickhouse.ClickHouseService.GetMessages:output_type -> clickhouse.GetMessagesResponse
-	5,  // 28: clickhouse.ClickHouseService.GetMessageCount:output_type -> clickhouse.GetMessageCountResponse
-	8,  // 29: clickhouse.ClickHouseService.GetUniqueCANIDs:output_type -> clickhouse.GetUniqueCANIDsResponse
-	11, // 30: clickhouse.ClickHouseService.GetStatsByCANID:output_type -> clickhouse.GetStatsByCANIDResponse
-	14, // 31: clickhouse.ClickHouseService.GetCANopenMessages:output_type -> clickhouse.GetCANopenMessagesResponse
-	17, // 32: clickhouse.ClickHouseService.GetCANopenStats:output_type -> clickhouse.GetCANopenStatsResponse
+var file_internal_proto_can_can_proto_depIdxs = []int32{
+	20, // 0: proto.QueryFilter.start_time:type_name -> google.protobuf.Timestamp
+	20, // 1: proto.QueryFilter.end_time:type_name -> google.protobuf.Timestamp
+	20, // 2: proto.CANMessage.timestamp:type_name -> google.protobuf.Timestamp
+	0,  // 3: proto.GetMessagesRequest.filter:type_name -> proto.QueryFilter
+	1,  // 4: proto.GetMessagesResponse.messages:type_name -> proto.CANMessage
+	0,  // 5: proto.GetMessageCountRequest.filter:type_name -> proto.QueryFilter
+	0,  // 6: proto.GetUniqueCANIDsRequest.filter:type_name -> proto.QueryFilter
+	7,  // 7: proto.GetUniqueCANIDsResponse.can_ids:type_name -> proto.CANIDInfo
+	0,  // 8: proto.GetStatsByCANIDRequest.filter:type_name -> proto.QueryFilter
+	20, // 9: proto.CANIDStats.first_seen:type_name -> google.protobuf.Timestamp
+	20, // 10: proto.CANIDStats.last_seen:type_name -> google.protobuf.Timestamp
+	10, // 11: proto.GetStatsByCANIDResponse.stats:type_name -> proto.CANIDStats
+	0,  // 12: proto.GetCANopenMessagesRequest.filter:type_name -> proto.QueryFilter
+	18, // 13: proto.GetCANopenMessagesRequest.pdo_mappings:type_name -> proto.GetCANopenMessagesRequest.PdoMappingsEntry
+	20, // 14: proto.CANopenMessage.timestamp:type_name -> google.protobuf.Timestamp
+	19, // 15: proto.CANopenMessage.parsed_data:type_name -> proto.CANopenMessage.ParsedDataEntry
+	13, // 16: proto.GetCANopenMessagesResponse.messages:type_name -> proto.CANopenMessage
+	0,  // 17: proto.GetCANopenStatsRequest.filter:type_name -> proto.QueryFilter
+	20, // 18: proto.CANopenMessageTypeStats.first_seen:type_name -> google.protobuf.Timestamp
+	20, // 19: proto.CANopenMessageTypeStats.last_seen:type_name -> google.protobuf.Timestamp
+	16, // 20: proto.GetCANopenStatsResponse.stats:type_name -> proto.CANopenMessageTypeStats
+	2,  // 21: proto.canService.GetMessages:input_type -> proto.GetMessagesRequest
+	4,  // 22: proto.canService.GetMessageCount:input_type -> proto.GetMessageCountRequest
+	6,  // 23: proto.canService.GetUniqueCANIDs:input_type -> proto.GetUniqueCANIDsRequest
+	9,  // 24: proto.canService.GetStatsByCANID:input_type -> proto.GetStatsByCANIDRequest
+	12, // 25: proto.canService.GetCANopenMessages:input_type -> proto.GetCANopenMessagesRequest
+	15, // 26: proto.canService.GetCANopenStats:input_type -> proto.GetCANopenStatsRequest
+	3,  // 27: proto.canService.GetMessages:output_type -> proto.GetMessagesResponse
+	5,  // 28: proto.canService.GetMessageCount:output_type -> proto.GetMessageCountResponse
+	8,  // 29: proto.canService.GetUniqueCANIDs:output_type -> proto.GetUniqueCANIDsResponse
+	11, // 30: proto.canService.GetStatsByCANID:output_type -> proto.GetStatsByCANIDResponse
+	14, // 31: proto.canService.GetCANopenMessages:output_type -> proto.GetCANopenMessagesResponse
+	17, // 32: proto.canService.GetCANopenStats:output_type -> proto.GetCANopenStatsResponse
 	27, // [27:33] is the sub-list for method output_type
 	21, // [21:27] is the sub-list for method input_type
 	21, // [21:21] is the sub-list for extension type_name
@@ -1213,28 +1213,28 @@ var file_api_proto_clickhouse_proto_depIdxs = []int32{
 	0,  // [0:21] is the sub-list for field type_name
 }
 
-func init() { file_api_proto_clickhouse_proto_init() }
-func file_api_proto_clickhouse_proto_init() {
-	if File_api_proto_clickhouse_proto != nil {
+func init() { file_internal_proto_can_can_proto_init() }
+func file_internal_proto_can_can_proto_init() {
+	if File_internal_proto_can_can_proto != nil {
 		return
 	}
-	file_api_proto_clickhouse_proto_msgTypes[0].OneofWrappers = []any{}
-	file_api_proto_clickhouse_proto_msgTypes[12].OneofWrappers = []any{}
+	file_internal_proto_can_can_proto_msgTypes[0].OneofWrappers = []any{}
+	file_internal_proto_can_can_proto_msgTypes[12].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_clickhouse_proto_rawDesc), len(file_api_proto_clickhouse_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_proto_can_can_proto_rawDesc), len(file_internal_proto_can_can_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_api_proto_clickhouse_proto_goTypes,
-		DependencyIndexes: file_api_proto_clickhouse_proto_depIdxs,
-		MessageInfos:      file_api_proto_clickhouse_proto_msgTypes,
+		GoTypes:           file_internal_proto_can_can_proto_goTypes,
+		DependencyIndexes: file_internal_proto_can_can_proto_depIdxs,
+		MessageInfos:      file_internal_proto_can_can_proto_msgTypes,
 	}.Build()
-	File_api_proto_clickhouse_proto = out.File
-	file_api_proto_clickhouse_proto_goTypes = nil
-	file_api_proto_clickhouse_proto_depIdxs = nil
+	File_internal_proto_can_can_proto = out.File
+	file_internal_proto_can_can_proto_goTypes = nil
+	file_internal_proto_can_can_proto_depIdxs = nil
 }

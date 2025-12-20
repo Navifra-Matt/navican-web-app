@@ -24,13 +24,15 @@ func main() {
 	}
 
 	log.Printf("Starting CAN Database API Server...")
-	log.Printf("Server Port: %d", cfg.APIPort)
+	log.Printf("HTTP Server Port: %d", cfg.APIPort)
+	log.Printf("gRPC Server Port: %d", cfg.GRPCPort)
 	log.Printf("ClickHouse: %s:%d/%s.%s", cfg.ClickHouseHost, cfg.ClickHousePort, cfg.ClickHouseDatabase, cfg.ClickHouseTable)
 	log.Printf("InfluxDB: %s/%s", cfg.InfluxDBURL, cfg.InfluxDBDatabase)
 
 	// Create API server configuration
 	serverConfig := api.ServerConfig{
 		Port:             cfg.APIPort,
+		GRPCPort:         cfg.GRPCPort,
 		CHHost:           cfg.ClickHouseHost,
 		CHPort:           cfg.ClickHousePort,
 		CHDatabase:       cfg.ClickHouseDatabase,
@@ -61,7 +63,8 @@ func main() {
 	}()
 
 	log.Println("API Server started successfully")
-	log.Printf("API documentation available at: http://localhost:%d/", cfg.APIPort)
+	log.Printf("HTTP API available at: http://localhost:%d/", cfg.APIPort)
+	log.Printf("gRPC API available at: localhost:%d", cfg.GRPCPort)
 	log.Println("Press Ctrl+C to stop")
 
 	// Wait for termination signal

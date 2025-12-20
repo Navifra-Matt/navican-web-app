@@ -32,6 +32,7 @@ type Config struct {
 	// General
 	BatchSize int
 	APIPort   int
+	GRPCPort  int
 }
 
 // LoadConfig loads configuration from .env file
@@ -52,6 +53,7 @@ func LoadConfig(envFile string) (*Config, error) {
 		InfluxDBDatabase:     "can_messages",
 		BatchSize:            1000,
 		APIPort:              8080,
+		GRPCPort:             50051,
 	}
 
 	// Try to load .env file
@@ -123,6 +125,8 @@ func LoadConfig(envFile string) (*Config, error) {
 			config.BatchSize, _ = strconv.Atoi(value)
 		case "API_PORT":
 			config.APIPort, _ = strconv.Atoi(value)
+		case "GRPC_PORT":
+			config.GRPCPort, _ = strconv.Atoi(value)
 		}
 	}
 

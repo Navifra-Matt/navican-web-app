@@ -1,13 +1,12 @@
 syntax = "proto3";
 
-package clickhouse;
+package proto;
 
-option go_package = "can-db-writer/api/proto/clickhouse";
+option go_package = "can-db-writer/internal/proto/can";
 
 import "google/protobuf/timestamp.proto";
 
-// ClickHouse service definition
-service ClickHouseService {
+service canService {
   // Get CAN messages with optional filters
   rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
 
