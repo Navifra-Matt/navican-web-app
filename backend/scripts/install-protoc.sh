@@ -88,5 +88,3 @@ fi
 
 echo ""
 echo "Installation complete!"
-echo ""
-echo "You can now run: make proto"
