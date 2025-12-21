@@ -266,6 +266,7 @@ func (api *ClickHouseAPI) GetStatsByCANID(w http.ResponseWriter, r *http.Request
 // GetCANopenMessages retrieves CAN messages classified by CANopen message type
 // GET /api/clickhouse/canopen/messages?message_type=pdo&start_time=2024-01-01T00:00:00Z&end_time=2024-01-02T00:00:00Z&interface=can0&limit=100&offset=0
 // message_type can be: nmt, sync, emcy, pdo, sdo, or empty for all
+// Multiple message types: message_type=pdo&message_type=sdo&message_type=nmt
 //
 // Dynamic PDO field mapping via query parameters:
 // tpdo1=statusword:uint16:0:2,mode_of_operation:int8:2:1
@@ -282,7 +283,16 @@ func (api *ClickHouseAPI) GetCANopenMessages(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	messageType := r.URL.Query().Get("message_type")
+	// message_type can be single value or comma-separated array
+	// e.g., message_type=pdo or message_type=pdo,sdo,nmt
+	messageTypes := r.URL.Query()["message_type"]
+	if len(messageTypes) == 0 {
+		// Try comma-separated format
+		if mt := r.URL.Query().Get("message_type"); mt != "" {
+			messageTypes = []string{mt}
+		}
+	}
+
 	nodeIDStr := r.URL.Query().Get("node_id")
 
 	var nodeIDFilter *uint8
@@ -350,7 +360,7 @@ func (api *ClickHouseAPI) GetCANopenMessages(w http.ResponseWriter, r *http.Requ
 				WHEN can_id >= 0x700 AND can_id <= 0x77F THEN 'HEARTBEAT'
 				ELSE 'UNKNOWN'
 			END as message_type,
-			CASE
+			CAST(CASE
 				WHEN can_id = 0x000 OR can_id = 0x080 THEN 0
 				WHEN can_id >= 0x081 AND can_id <= 0x0FF THEN can_id - 0x080
 				WHEN can_id >= 0x180 AND can_id <= 0x1FF THEN can_id - 0x180 + 1
@@ -365,26 +375,36 @@ func (api *ClickHouseAPI) GetCANopenMessages(w http.ResponseWriter, r *http.Requ
 				WHEN can_id >= 0x600 AND can_id <= 0x67F THEN can_id - 0x600 + 1
 				WHEN can_id >= 0x700 AND can_id <= 0x77F THEN can_id - 0x700 + 1
 				ELSE 0
-			END as node_id
+			END AS UInt8) as node_id
 		FROM %s
 		WHERE 1=1`, api.tableName)
 	args := []any{}
 
-	// Add message type filter
-	if messageType != "" {
-		switch messageType {
-		case "nmt":
-			query += " AND can_id = 0x000"
-		case "sync":
-			query += " AND can_id = 0x080"
-		case "emcy":
-			query += " AND can_id >= 0x081 AND can_id <= 0x0FF"
-		case "pdo":
-			query += " AND ((can_id >= 0x180 AND can_id <= 0x1FF) OR (can_id >= 0x200 AND can_id <= 0x27F) OR (can_id >= 0x280 AND can_id <= 0x2FF) OR (can_id >= 0x300 AND can_id <= 0x37F) OR (can_id >= 0x380 AND can_id <= 0x3FF) OR (can_id >= 0x400 AND can_id <= 0x47F) OR (can_id >= 0x480 AND can_id <= 0x4FF) OR (can_id >= 0x500 AND can_id <= 0x57F))"
-		case "sdo":
-			query += " AND ((can_id >= 0x580 AND can_id <= 0x5FF) OR (can_id >= 0x600 AND can_id <= 0x67F))"
-		case "heartbeat":
-			query += " AND can_id >= 0x700 AND can_id <= 0x77F"
+	// Add message type filter (supports multiple types)
+	if len(messageTypes) > 0 {
+		conditions := []string{}
+		for _, messageType := range messageTypes {
+			switch messageType {
+			case "nmt":
+				conditions = append(conditions, "can_id = 0x000")
+			case "sync":
+				conditions = append(conditions, "can_id = 0x080")
+			case "emcy":
+				conditions = append(conditions, "(can_id >= 0x081 AND can_id <= 0x0FF)")
+			case "pdo":
+				conditions = append(conditions, "((can_id >= 0x180 AND can_id <= 0x1FF) OR (can_id >= 0x200 AND can_id <= 0x27F) OR (can_id >= 0x280 AND can_id <= 0x2FF) OR (can_id >= 0x300 AND can_id <= 0x37F) OR (can_id >= 0x380 AND can_id <= 0x3FF) OR (can_id >= 0x400 AND can_id <= 0x47F) OR (can_id >= 0x480 AND can_id <= 0x4FF) OR (can_id >= 0x500 AND can_id <= 0x57F))")
+			case "sdo":
+				conditions = append(conditions, "((can_id >= 0x580 AND can_id <= 0x5FF) OR (can_id >= 0x600 AND can_id <= 0x67F))")
+			case "heartbeat":
+				conditions = append(conditions, "(can_id >= 0x700 AND can_id <= 0x77F)")
+			}
+		}
+		if len(conditions) > 0 {
+			query += " AND (" + conditions[0]
+			for i := 1; i < len(conditions); i++ {
+				query += " OR " + conditions[i]
+			}
+			query += ")"
 		}
 	}
 
