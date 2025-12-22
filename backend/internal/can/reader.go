@@ -97,7 +97,7 @@ func (r *Reader) readLoop() {
 
 		msg := models.CANMessage{
 			Frame:     frame,
-			Timestamp: time.Now(),
+			Timestamp: time.Now().UTC(),
 			Interface: r.ifname,
 		}
 
