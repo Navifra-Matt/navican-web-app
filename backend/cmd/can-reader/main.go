@@ -4,7 +4,6 @@ import (
 	"can-db-writer/internal/can"
 	"can-db-writer/internal/config"
 	"can-db-writer/internal/database/clickhouse"
-	"can-db-writer/internal/database/influxdb"
 	"flag"
 	"log"
 	"os"
@@ -27,7 +26,6 @@ func main() {
 	log.Printf("Starting CAN to Database bridge...")
 	log.Printf("CAN Interface: %s", cfg.CANInterface)
 	log.Printf("ClickHouse: %s:%d/%s.%s", cfg.ClickHouseHost, cfg.ClickHousePort, cfg.ClickHouseDatabase, cfg.ClickHouseTable)
-	log.Printf("InfluxDB: %s/%s", cfg.InfluxDBURL, cfg.InfluxDBDatabase)
 
 	// Create CAN reader
 	canReader, err := can.NewReader(cfg.CANInterface)
@@ -71,19 +69,6 @@ func main() {
 	statsWriter := clickhouse.NewStatsWriter(chWriter.GetConn(), cfg.BatchSize/10)
 	defer statsWriter.Close()
 
-	// Create InfluxDB writer
-	influxConfig := influxdb.Config{
-		URL:      cfg.InfluxDBURL,
-		Token:    cfg.InfluxDBToken,
-		Database: cfg.InfluxDBDatabase,
-	}
-
-	influxWriter, err := influxdb.New(influxConfig, cfg.BatchSize)
-	if err != nil {
-		log.Fatalf("Failed to create InfluxDB writer: %v", err)
-	}
-	defer influxWriter.Close()
-
 	// Create and start statistics collector
 	statsCollector := can.NewStatsCollector(cfg.CANInterface, time.Duration(cfg.StatsInterval)*time.Second)
 	statsCollector.Start()
@@ -92,7 +77,6 @@ func main() {
 	// Start readers and writers
 	canReader.Start()
 	chWriter.Start(cfg.ClickHouseTable)
-	influxWriter.Start(cfg.InfluxDBDatabase)
 	statsWriter.Start(cfg.ClickHouseStatsTable)
 
 	log.Println("Bridge started successfully. Press Ctrl+C to stop.")
@@ -111,9 +95,8 @@ func main() {
 			select {
 			case msg := <-canReader.GetMessageChannel():
 				messageCount++
-				// Write to both ClickHouse and InfluxDB
-				chWriter.Write(msg)
-				influxWriter.Write(msg)
+			// Write to ClickHouse
+			chWriter.Write(msg)
 
 				// Log every 1000 messages
 				if messageCount%1000 == 0 {

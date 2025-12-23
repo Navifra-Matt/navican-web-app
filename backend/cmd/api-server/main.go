@@ -27,22 +27,18 @@ func main() {
 	log.Printf("HTTP Server Port: %d", cfg.APIPort)
 	log.Printf("gRPC Server Port: %d", cfg.GRPCPort)
 	log.Printf("ClickHouse: %s:%d/%s.%s", cfg.ClickHouseHost, cfg.ClickHousePort, cfg.ClickHouseDatabase, cfg.ClickHouseTable)
-	log.Printf("InfluxDB: %s/%s", cfg.InfluxDBURL, cfg.InfluxDBDatabase)
 
 	// Create API server configuration
 	serverConfig := api.ServerConfig{
-		Port:             cfg.APIPort,
-		GRPCPort:         cfg.GRPCPort,
-		CHHost:           cfg.ClickHouseHost,
-		CHPort:           cfg.ClickHousePort,
-		CHDatabase:       cfg.ClickHouseDatabase,
-		CHUsername:       cfg.ClickHouseUsername,
-		CHPassword:       cfg.ClickHousePassword,
-		CHTable:          cfg.ClickHouseTable,
-		CHStatsTable:     cfg.ClickHouseStatsTable,
-		InfluxDBURL:      cfg.InfluxDBURL,
-		InfluxDBToken:    cfg.InfluxDBToken,
-		InfluxDBDatabase: cfg.InfluxDBDatabase,
+		Port:         cfg.APIPort,
+		GRPCPort:     cfg.GRPCPort,
+		CHHost:       cfg.ClickHouseHost,
+		CHPort:       cfg.ClickHousePort,
+		CHDatabase:   cfg.ClickHouseDatabase,
+		CHUsername:   cfg.ClickHouseUsername,
+		CHPassword:   cfg.ClickHousePassword,
+		CHTable:      cfg.ClickHouseTable,
+		CHStatsTable: cfg.ClickHouseStatsTable,
 	}
 
 	// Create and start API server

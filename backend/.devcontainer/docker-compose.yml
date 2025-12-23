@@ -26,7 +26,6 @@ services:
     depends_on:
       # - canbus
       - hyperdx
-      - influxdb3
 
   hyperdx:
     image: docker.hyperdx.io/hyperdx/hyperdx-all-in-one:latest
@@ -55,38 +54,6 @@ services:
         soft: 262144
         hard: 262144
 
-  influxdb3:
-    container_name: influxdb3-core
-    image: influxdb:3-core
-    user: "0:0"
-    ports:
-      - "8181:8181"
-    volumes:
-      - ../.volumes/influxdb3/data:/var/lib/influxdb3/data
-      - ../.volumes/influxdb3/plugin:/var/lib/influxdb3/plugins
-    command:
-      - influxdb3
-      - serve
-      - --node-id=node0
-      - --object-store=file
-      - --data-dir=/var/lib/influxdb3/data
-      - --plugin-dir=/var/lib/influxdb3/plugins
-
-  influxdb3-explorer:
-    container_name: influxdb3-explorer
-    image: influxdata/influxdb3-ui:latest
-    ports:
-      - "8888:80"
-      - "8889:8888"
-    volumes:
-      - ../.volumes/influxdb3_ui/db:/db:rw
-      - ../.volumes/influxdb3_ui/config:/app-root/config:ro
-    environment:
-      SESSION_SECRET_KEY: "${SESSION_SECRET_KEY:-$(openssl rand -hex 32)}"
-    command: [ "--mode=admin" ]
-    depends_on:
-      - influxdb3
-
   grafana:
     container_name: grafana
     image: grafana/grafana:latest
@@ -101,4 +68,3 @@ services:
       - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
     depends_on:
       - hyperdx
-      - influxdb3

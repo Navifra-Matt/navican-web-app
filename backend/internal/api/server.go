@@ -15,7 +15,6 @@ type Server struct {
 	server        *http.Server
 	grpcServer    *GRPCServer
 	clickhouseAPI *ClickHouseAPI
-	influxdbAPI   *InfluxDBAPI
 	statsAPI      *StatsAPI
 }
 
@@ -30,9 +29,6 @@ type ServerConfig struct {
 	CHPassword       string
 	CHTable          string
 	CHStatsTable     string
-	InfluxDBURL      string
-	InfluxDBToken    string
-	InfluxDBDatabase string
 }
 
 // NewServer creates a new API server instance
@@ -65,12 +61,6 @@ func NewServer(config ServerConfig) (*Server, error) {
 
 	// Create API handlers
 	clickhouseAPI := NewClickHouseAPI(chConn, config.CHTable)
-
-	influxdbAPI, err := NewInfluxDBAPI(config.InfluxDBURL, config.InfluxDBToken, config.InfluxDBDatabase)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create InfluxDB API: %w", err)
-	}
-
 	statsAPI := NewStatsAPI(chConn, config.CHStatsTable)
 
 	// Create gRPC server if port is specified
@@ -85,7 +75,6 @@ func NewServer(config ServerConfig) (*Server, error) {
 
 	server := &Server{
 		clickhouseAPI: clickhouseAPI,
-		influxdbAPI:   influxdbAPI,
 		statsAPI:      statsAPI,
 		grpcServer:    grpcServer,
 	}
@@ -113,20 +102,7 @@ func (s *Server) setupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/health", s.handleHealth)
 
 	// ClickHouse endpoints
-	mux.HandleFunc("/api/clickhouse/messages", s.clickhouseAPI.GetMessages)
-	mux.HandleFunc("/api/clickhouse/count", s.clickhouseAPI.GetMessageCount)
-	mux.HandleFunc("/api/clickhouse/can_ids", s.clickhouseAPI.GetUniqueCANIDs)
-	mux.HandleFunc("/api/clickhouse/stats", s.clickhouseAPI.GetStatsByCANID)
-	
-	// CANopen endpoints
 	mux.HandleFunc("/api/clickhouse/canopen/messages", s.clickhouseAPI.GetCANopenMessages)
-	mux.HandleFunc("/api/clickhouse/canopen/stats", s.clickhouseAPI.GetCANopenStats)
-
-	// InfluxDB endpoints
-	mux.HandleFunc("/api/influxdb/messages", s.influxdbAPI.GetMessages)
-	mux.HandleFunc("/api/influxdb/count", s.influxdbAPI.GetMessageCount)
-	mux.HandleFunc("/api/influxdb/query", s.influxdbAPI.ExecuteQuery)
-	mux.HandleFunc("/api/influxdb/health", s.influxdbAPI.HealthCheck)
 
 	// SocketCAN statistics endpoints
 	mux.HandleFunc("/api/stats/latest", s.statsAPI.GetLatestStats)
@@ -156,12 +132,6 @@ func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 				"messages": "/api/clickhouse/canopen/messages?message_type=pdo&start_time=2024-01-01T00:00:00Z&interface=can0&limit=100",
 				"stats":    "/api/clickhouse/canopen/stats?start_time=2024-01-01T00:00:00Z&interface=can0",
 			},
-			"influxdb": map[string]string{
-				"messages": "/api/influxdb/messages?start_time=2024-01-01T00:00:00Z&end_time=2024-01-02T00:00:00Z&can_id=0x123&interface=can0&limit=100",
-				"count":    "/api/influxdb/count?start_time=2024-01-01T00:00:00Z&can_id=0x123",
-				"query":    "/api/influxdb/query (POST)",
-				"health":   "/api/influxdb/health",
-			},
 			"socketcan_stats": map[string]string{
 				"latest":     "/api/stats/latest?interface=can0",
 				"history":    "/api/stats/history?interface=can0&start_time=2024-01-01T00:00:00Z&end_time=2024-01-02T00:00:00Z&limit=100",
@@ -181,7 +151,6 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 		"services": map[string]string{
 			"api":        "up",
 			"clickhouse": "connected",
-			"influxdb":   "connected",
 		},
 	}
 

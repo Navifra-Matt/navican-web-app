@@ -1,6 +1,6 @@
 # CAN Database Bridge & API Server
 
-SocketCAN 인터페이스에서 CAN 패킷을 읽어 ClickHouse와 InfluxDB 데이터베이스로 동시에 전송하고, REST API로 데이터를 조회할 수 있는 Go 프로젝트입니다.
+SocketCAN 인터페이스에서 CAN 패킷을 읽어 ClickHouse 데이터베이스로 전송하고, REST API로 데이터를 조회할 수 있는 Go 프로젝트입니다.
 
 ## 프로젝트 구조
 
@@ -38,16 +38,16 @@ SocketCAN 인터페이스에서 CAN 패킷을 읽어 ClickHouse와 InfluxDB 데�
 ### CAN Reader (Data Ingestion)
 - SocketCAN 인터페이스에서 CAN 프레임 실시간 읽기
 - CAN ID 필터링 지원
-- ClickHouse와 InfluxDB로 동시 배치 전송 (성능 최적화)
+- ClickHouse로 배치 전송 (성능 최적화)
 - 타임스탬프 자동 기록
 - 우아한 종료 (Ctrl+C로 안전하게 종료)
 - SocketCAN 인터페이스 통계 자동 수집 및 저장
 
 ### API Server (Data Access)
-- ClickHouse와 InfluxDB 데이터 REST API로 조회
+- ClickHouse 데이터 REST API로 조회
 - 시간 범위, CAN ID, 인터페이스별 필터링
 - SocketCAN 통계 조회 및 집계
-- 커스텀 쿼리 실행 (Flux for InfluxDB)
+- 커스텀 쿼리 실행 (ClickHouse SQL)
 - CORS 지원
 
 ## 요구사항
@@ -55,7 +55,6 @@ SocketCAN 인터페이스에서 CAN 패킷을 읽어 ClickHouse와 InfluxDB 데�
 - Linux 시스템 (SocketCAN 지원)
 - Go 1.21 이상
 - ClickHouse 서버 (포트 9000)
-- InfluxDB 2.x 서버 (포트 8086)
 - CAN 인터페이스 (예: can0, vcan0)
 
 ## 설치
@@ -128,9 +127,6 @@ API_PORT=8080
 | `CLICKHOUSE_PASSWORD` | ClickHouse 비밀번호 | - |
 | `CLICKHOUSE_TABLE` | CAN 메시지 테이블 이름 | can_messages |
 | `CLICKHOUSE_STATS_TABLE` | 통계 테이블 이름 | can_interface_stats |
-| `INFLUXDB_URL` | InfluxDB v3 서버 URL | http://localhost:8181 |
-| `INFLUXDB_TOKEN` | InfluxDB v3 인증 토큰 | - |
-| `INFLUXDB_DATABASE` | InfluxDB v3 데이터베이스 이름 | can_messages |
 | `BATCH_SIZE` | 데이터베이스 배치 크기 | 1000 |
 | `API_PORT` | API 서버 포트 | 8080 |
 
@@ -194,7 +190,6 @@ STATS_INTERVAL=10  # 10초마다 통계 수집
 API 서버는 .env 파일에서 다음 설정을 읽습니다:
 - `API_PORT`: API 서버 포트
 - `CLICKHOUSE_*`: ClickHouse 연결 정보
-- `INFLUXDB_*`: InfluxDB 연결 정보
 
 ### API 엔드포인트 개요
 
@@ -345,69 +340,6 @@ curl "http://localhost:8080/api/stats/aggregated?interface=can0&interval=1h&limi
 ]
 ```
 
-### InfluxDB API
-
-#### 1. 메시지 조회
-```bash
-GET /api/influxdb/messages
-```
-
-**쿼리 파라미터:**
-- `start_time`: 시작 시간 (RFC3339 형식)
-- `end_time`: 종료 시간 (RFC3339 형식)
-- `can_id`: CAN ID (16진수)
-- `interface`: CAN 인터페이스 이름
-- `limit`: 최대 결과 수 (기본값: 100)
-
-**예제:**
-```bash
-# 최근 메시지 조회
-curl "http://localhost:8080/api/influxdb/messages?limit=100"
-
-# 특정 CAN ID 조회
-curl "http://localhost:8080/api/influxdb/messages?can_id=0x123&limit=50"
-
-# 시간 범위로 조회
-curl "http://localhost:8080/api/influxdb/messages?start_time=2024-01-01T00:00:00Z&end_time=2024-01-02T00:00:00Z"
-```
-
-#### 2. 메시지 개수 조회
-```bash
-GET /api/influxdb/count
-```
-
-**예제:**
-```bash
-curl "http://localhost:8080/api/influxdb/count?can_id=0x123"
-```
-
-#### 3. 커스텀 Flux 쿼리 실행
-InfluxDB의 Flux 쿼리 언어를 사용하여 데이터를 조회합니다.
-
-```bash
-POST /api/influxdb/query
-Content-Type: application/json
-
-{
-  "query": "from(bucket: \"can_messages\") |> range(start: -1h) |> filter(fn: (r) => r[\"_measurement\"] == \"can_messages\") |> limit(n: 10)"
-}
-```
-
-**예제:**
-```bash
-curl -X POST http://localhost:8080/api/influxdb/query \
-  -H "Content-Type: application/json" \
-  -d '{"query": "from(bucket: \"can_messages\") |> range(start: -1h) |> filter(fn: (r) => r[\"can_id\"] == \"0x123\") |> count()"}'
-```
-
-#### 4. InfluxDB 헬스 체크
-```bash
-GET /api/influxdb/health
-curl "http://localhost:8080/api/influxdb/health"
-```
-
----
-
 ## Docker Compose로 실행
 
 프로젝트에 포함된 docker-compose.yml로 ClickHouse를 쉽게 실행할 수 있습니다:
@@ -533,7 +465,6 @@ curl "http://localhost:8080/api/clickhouse/messages?limit=10"
 ```
 2025/11/24 12:00:00 Processed 1000 messages (errors: 0)
 2025/11/24 12:00:05 Flushed 1000 messages to ClickHouse
-2025/11/24 12:00:05 Flushed 1000 messages to InfluxDB
 ```
 
 ### API Server 로그
@@ -546,17 +477,6 @@ curl "http://localhost:8080/api/clickhouse/messages?limit=10"
 
 ---
 
-## 데이터베이스 비교
-
-| 특징 | ClickHouse | InfluxDB |
-|------|-----------|---------|
-| **강점** | 복잡한 분석 쿼리, 집계 | 시계열 데이터, 빠른 쓰기 |
-| **쿼리 언어** | SQL | Flux / InfluxQL |
-| **압축률** | 매우 높음 | 높음 |
-| **실시간 조회** | 우수 | 매우 우수 |
-| **사용 사례** | 대용량 데이터 분석 | 실시간 모니터링, 대시보드 |
-
----
 
 ## 개발 팁
 
@@ -646,13 +566,6 @@ sudo ip link set can0 up type can bitrate 500000
 - ClickHouse 서버가 실행 중인지 확인
 - 방화벽 설정 확인 (기본 포트: 9000)
 - 사용자 권한 확인
-
-### InfluxDB 연결 실패
-
-- InfluxDB 서버가 실행 중인지 확인
-- HTTP 포트가 열려있는지 확인 (기본 포트: 8086)
-- API 토큰이 올바른지 확인
-- 조직 이름과 버킷 이름이 정확한지 확인
 
 ### 권한 오류
 

@@ -30,9 +30,6 @@
 		8080, // API Server
 		8081, // HyperDX UI
 		8123, // ClickHouse HTTP
-		8181, // InfluxDB3 Core
-		8888, // InfluxDB3 Explorer
-		8889, // InfluxDB3 Explorer (alt)
 		9001 // ClickHouse Native
 	],
 	// Use 'postCreateCommand' to run commands after the container is created.

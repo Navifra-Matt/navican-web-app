@@ -4,7 +4,6 @@ go 1.25.3
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.42.0
-	github.com/InfluxCommunity/influxdb3-go/v2 v2.11.0
 	github.com/vishvananda/netlink v1.3.1
 	golang.org/x/sys v0.39.0
 	google.golang.org/grpc v1.75.1
