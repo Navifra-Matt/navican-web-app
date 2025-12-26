@@ -281,16 +281,17 @@ func (api *ClickHouseAPI) GetCANopenMessages(w http.ResponseWriter, r *http.Requ
 	respondWithJSON(w, http.StatusOK, messages)
 }
 
-// ExportData exports CAN messages to Parquet format
+// ExportData exports CAN messages to Parquet or Iceberg format
 // POST /api/clickhouse/export
 // Request body:
 // {
 //   "start_time": "2024-01-01T00:00:00Z",
 //   "end_time": "2024-01-02T00:00:00Z",
-//   "filename": "export.parquet" (optional, default: can_messages_YYYYMMDD.parquet),
+//   "format": "parquet|iceberg" (optional, default: parquet),
+//   "filename": "export.parquet" (optional, default: can_messages_YYYYMMDD.parquet or .iceberg),
 //   "compression": "snappy|lz4|brotli|zstd|gzip|none" (optional, default: zstd)
 // }
-// Response: Parquet file download
+// Response: File download in the requested format
 func (api *ClickHouseAPI) ExportData(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		respondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
@@ -300,6 +301,7 @@ func (api *ClickHouseAPI) ExportData(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		StartTime   string `json:"start_time"`
 		EndTime     string `json:"end_time"`
+		Format      string `json:"format"`
 		Filename    string `json:"filename"`
 		Compression string `json:"compression"`
 	}
@@ -319,6 +321,26 @@ func (api *ClickHouseAPI) ExportData(w http.ResponseWriter, r *http.Request) {
 	endTime, err := time.Parse(time.RFC3339, req.EndTime)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid end_time format: %v", err))
+		return
+	}
+
+	// Set default format
+	if req.Format == "" {
+		req.Format = "parquet"
+	}
+
+	// Validate format
+	var exportFormat clickhouse.ExportFormat
+	var defaultExt string
+	switch req.Format {
+	case "parquet":
+		exportFormat = clickhouse.FormatParquet
+		defaultExt = ".parquet"
+	case "iceberg":
+		exportFormat = clickhouse.FormatIceberg
+		defaultExt = ".iceberg"
+	default:
+		respondWithError(w, http.StatusBadRequest, "Invalid format. Must be one of: parquet, iceberg")
 		return
 	}
 
@@ -344,16 +366,16 @@ func (api *ClickHouseAPI) ExportData(w http.ResponseWriter, r *http.Request) {
 	// Generate filename if not provided
 	filename := req.Filename
 	if filename == "" {
-		filename = fmt.Sprintf("can_messages_%s.parquet", startTime.Format("20060102"))
+		filename = fmt.Sprintf("can_messages_%s%s", startTime.Format("20060102"), defaultExt)
 	}
-	// Ensure .parquet extension
-	if filepath.Ext(filename) != ".parquet" {
-		filename += ".parquet"
+	// Ensure correct extension
+	if filepath.Ext(filename) != defaultExt {
+		filename += defaultExt
 	}
 
 	// Create export options
 	opts := clickhouse.ExportOptions{
-		Format:      clickhouse.FormatParquet,
+		Format:      exportFormat,
 		StartTime:   startTime,
 		EndTime:     endTime,
 		Compression: req.Compression,

@@ -143,7 +143,7 @@ func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 				"count":    "/api/clickhouse/count?start_time=2024-01-01T00:00:00Z&can_id=0x123",
 				"can_ids":  "/api/clickhouse/can_ids",
 				"stats":    "/api/clickhouse/stats?limit=10",
-				"export":   "POST /api/clickhouse/export (body: {start_time, end_time, filename?, compression?}) - Downloads Parquet file",
+				"export":   "POST /api/clickhouse/export (body: {start_time, end_time, format?: 'parquet'|'iceberg', filename?, compression?}) - Downloads file in requested format",
 			},
 			"canopen": map[string]string{
 				"messages": "/api/clickhouse/canopen/messages?message_type=pdo&start_time=2024-01-01T00:00:00Z&interface=can0&limit=100",

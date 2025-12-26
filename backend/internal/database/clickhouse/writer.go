@@ -190,6 +190,7 @@ type ExportFormat string
 
 const (
 	FormatParquet ExportFormat = "Parquet"
+	FormatIceberg ExportFormat = "Iceberg"
 )
 
 // ExportOptions contains options for exporting data
@@ -242,14 +243,19 @@ func (w *Writer) ExportToParquet(tableName string, opts ExportOptions) error {
 	return nil
 }
 
-// ExportToWriter exports data directly to an io.Writer as Parquet
-// This is used for streaming exports via HTTP using ClickHouse native Parquet format
-func (w *Writer) ExportToWriter(writer io.Writer, tableName string, opts ExportOptions) error {
+// ExportToIceberg exports data to Iceberg format
+func (w *Writer) ExportToIceberg(tableName string, opts ExportOptions) error {
 	if opts.Compression == "" {
 		opts.Compression = "zstd"
 	}
 
-	// Build query with ClickHouse's native Parquet format output
+	// Ensure output directory exists
+	dir := filepath.Dir(opts.OutputPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create output directory: %w", err)
+	}
+
+	// Build query with time range filter
 	query := fmt.Sprintf(`
 		SELECT
 			timestamp,
@@ -259,16 +265,69 @@ func (w *Writer) ExportToWriter(writer io.Writer, tableName string, opts ExportO
 		FROM %s
 		WHERE timestamp >= '%s' AND timestamp < '%s'
 		ORDER BY timestamp
-		FORMAT Parquet
+		INTO OUTFILE '%s'
+		FORMAT Iceberg
 		SETTINGS output_format_parquet_compression_method='%s'
 	`,
 		tableName,
 		opts.StartTime.Format("2006-01-02 15:04:05"),
 		opts.EndTime.Format("2006-01-02 15:04:05"),
+		opts.OutputPath,
 		opts.Compression,
 	)
 
-	// Use ClickHouse HTTP interface to get Parquet format directly
+	if err := w.conn.Exec(context.Background(), query); err != nil {
+		return fmt.Errorf("failed to export to Iceberg: %w", err)
+	}
+
+	fmt.Printf("Successfully exported data to Iceberg: %s\n", opts.OutputPath)
+	return nil
+}
+
+// ExportToWriter exports data directly to an io.Writer in the specified format
+// This is used for streaming exports via HTTP using ClickHouse native format support
+func (w *Writer) ExportToWriter(writer io.Writer, tableName string, opts ExportOptions) error {
+	if opts.Compression == "" {
+		opts.Compression = "zstd"
+	}
+
+	// Determine format and settings
+	var formatStr string
+	var settings string
+
+	switch opts.Format {
+	case FormatIceberg:
+		formatStr = "Iceberg"
+		// Iceberg format settings
+		settings = fmt.Sprintf("SETTINGS output_format_parquet_compression_method='%s'", opts.Compression)
+	case FormatParquet:
+		fallthrough
+	default:
+		formatStr = "Parquet"
+		settings = fmt.Sprintf("SETTINGS output_format_parquet_compression_method='%s'", opts.Compression)
+	}
+
+	// Build query with ClickHouse's native format output
+	query := fmt.Sprintf(`
+		SELECT
+			timestamp,
+			interface,
+			can_id,
+			data
+		FROM %s
+		WHERE timestamp >= '%s' AND timestamp < '%s'
+		ORDER BY timestamp
+		FORMAT %s
+		%s
+	`,
+		tableName,
+		opts.StartTime.Format("2006-01-02 15:04:05"),
+		opts.EndTime.Format("2006-01-02 15:04:05"),
+		formatStr,
+		settings,
+	)
+
+	// Use ClickHouse HTTP interface to get format directly
 	httpURL := fmt.Sprintf("http://%s:%d/", w.config.Host, 8123) // ClickHouse HTTP port is typically 8123
 
 	// Create HTTP request with query
@@ -294,12 +353,12 @@ func (w *Writer) ExportToWriter(writer io.Writer, tableName string, opts ExportO
 		return fmt.Errorf("ClickHouse HTTP query failed with status %d", resp.StatusCode)
 	}
 
-	// Copy the Parquet data from response to writer
+	// Copy the data from response to writer
 	written, err := io.Copy(writer, resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to copy Parquet data: %w", err)
+		return fmt.Errorf("failed to copy %s data: %w", formatStr, err)
 	}
 
-	fmt.Printf("Successfully exported %d bytes to Parquet format\n", written)
+	fmt.Printf("Successfully exported %d bytes to %s format\n", written, formatStr)
 	return nil
 }
