@@ -4,6 +4,11 @@ import (
 	"can-db-writer/internal/models"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -13,6 +18,7 @@ import (
 // Writer handles writing CAN messages to ClickHouse
 type Writer struct {
 	conn       driver.Conn
+	config     Config
 	batchSize  int
 	batch      []models.CANMessage
 	batchChan  chan models.CANMessage
@@ -58,6 +64,7 @@ func New(config Config, batchSize int) (*Writer, error) {
 
 	writer := &Writer{
 		conn:       conn,
+		config:     config,
 		batchSize:  batchSize,
 		batch:      make([]models.CANMessage, 0, batchSize),
 		batchChan:  make(chan models.CANMessage, batchSize*2),
@@ -80,6 +87,7 @@ func createTable(conn driver.Conn, tableName string) error {
 		) ENGINE = MergeTree()
 		ORDER BY (timestamp, can_id)
 		PARTITION BY toYYYYMMDD(timestamp)
+		TTL timestamp + INTERVAL 1 MONTH
 		SETTINGS index_granularity = 8192
 	`, tableName)
 
@@ -175,4 +183,123 @@ func (w *Writer) Close() error {
 // GetConn returns the underlying ClickHouse connection
 func (w *Writer) GetConn() driver.Conn {
 	return w.conn
+}
+
+// ExportFormat represents the export file format
+type ExportFormat string
+
+const (
+	FormatParquet ExportFormat = "Parquet"
+)
+
+// ExportOptions contains options for exporting data
+type ExportOptions struct {
+	Format      ExportFormat
+	StartTime   time.Time
+	EndTime     time.Time
+	OutputPath  string
+	Compression string // snappy, lz4, brotli, zstd, gzip, none (uncompressed) - default: zstd
+}
+
+// ExportToParquet exports data to Parquet format
+func (w *Writer) ExportToParquet(tableName string, opts ExportOptions) error {
+	if opts.Compression == "" {
+		opts.Compression = "zstd"
+	}
+
+	// Ensure output directory exists
+	dir := filepath.Dir(opts.OutputPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create output directory: %w", err)
+	}
+
+	// Build query with time range filter
+	query := fmt.Sprintf(`
+		SELECT
+			timestamp,
+			interface,
+			can_id,
+			data
+		FROM %s
+		WHERE timestamp >= '%s' AND timestamp < '%s'
+		ORDER BY timestamp
+		INTO OUTFILE '%s'
+		FORMAT Parquet
+		SETTINGS output_format_parquet_compression_method='%s'
+	`,
+		tableName,
+		opts.StartTime.Format("2006-01-02 15:04:05"),
+		opts.EndTime.Format("2006-01-02 15:04:05"),
+		opts.OutputPath,
+		opts.Compression,
+	)
+
+	if err := w.conn.Exec(context.Background(), query); err != nil {
+		return fmt.Errorf("failed to export to Parquet: %w", err)
+	}
+
+	fmt.Printf("Successfully exported data to Parquet: %s\n", opts.OutputPath)
+	return nil
+}
+
+// ExportToWriter exports data directly to an io.Writer as Parquet
+// This is used for streaming exports via HTTP using ClickHouse native Parquet format
+func (w *Writer) ExportToWriter(writer io.Writer, tableName string, opts ExportOptions) error {
+	if opts.Compression == "" {
+		opts.Compression = "zstd"
+	}
+
+	// Build query with ClickHouse's native Parquet format output
+	query := fmt.Sprintf(`
+		SELECT
+			timestamp,
+			interface,
+			can_id,
+			data
+		FROM %s
+		WHERE timestamp >= '%s' AND timestamp < '%s'
+		ORDER BY timestamp
+		FORMAT Parquet
+		SETTINGS output_format_parquet_compression_method='%s'
+	`,
+		tableName,
+		opts.StartTime.Format("2006-01-02 15:04:05"),
+		opts.EndTime.Format("2006-01-02 15:04:05"),
+		opts.Compression,
+	)
+
+	// Use ClickHouse HTTP interface to get Parquet format directly
+	httpURL := fmt.Sprintf("http://%s:%d/", w.config.Host, 8123) // ClickHouse HTTP port is typically 8123
+
+	// Create HTTP request with query
+	params := url.Values{}
+	params.Set("query", query)
+	params.Set("database", w.config.Database)
+
+	// Add authentication if needed
+	if w.config.Username != "" {
+		params.Set("user", w.config.Username)
+		params.Set("password", w.config.Password)
+	}
+
+	// Make HTTP GET request
+	fullURL := httpURL + "?" + params.Encode()
+	resp, err := http.Get(fullURL)
+	if err != nil {
+		return fmt.Errorf("failed to execute HTTP query: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("ClickHouse HTTP query failed with status %d", resp.StatusCode)
+	}
+
+	// Copy the Parquet data from response to writer
+	written, err := io.Copy(writer, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to copy Parquet data: %w", err)
+	}
+
+	fmt.Printf("Successfully exported %d bytes to Parquet format\n", written)
+	return nil
 }

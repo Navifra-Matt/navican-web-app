@@ -1,13 +1,14 @@
 package api
 
 import (
+	"can-db-writer/internal/database/clickhouse"
 	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
+	clickhousego "github.com/ClickHouse/clickhouse-go/v2"
 )
 
 // Server represents the HTTP API server
@@ -34,19 +35,19 @@ type ServerConfig struct {
 // NewServer creates a new API server instance
 func NewServer(config ServerConfig) (*Server, error) {
 	// Connect to ClickHouse
-	chConn, err := clickhouse.Open(&clickhouse.Options{
+	chConn, err := clickhousego.Open(&clickhousego.Options{
 		Addr: []string{fmt.Sprintf("%s:%d", config.CHHost, config.CHPort)},
-		Auth: clickhouse.Auth{
+		Auth: clickhousego.Auth{
 			Database: config.CHDatabase,
 			Username: config.CHUsername,
 			Password: config.CHPassword,
 		},
-		Settings: clickhouse.Settings{
+		Settings: clickhousego.Settings{
 			"max_execution_time": 60,
 		},
 		DialTimeout: 5 * time.Second,
-		Compression: &clickhouse.Compression{
-			Method: clickhouse.CompressionLZ4,
+		Compression: &clickhousego.Compression{
+			Method: clickhousego.CompressionLZ4,
 		},
 	})
 
@@ -59,8 +60,22 @@ func NewServer(config ServerConfig) (*Server, error) {
 		return nil, fmt.Errorf("failed to ping ClickHouse: %w", err)
 	}
 
+	// Create ClickHouse writer for export functionality
+	chConfig := clickhouse.Config{
+		Host:     config.CHHost,
+		Port:     config.CHPort,
+		Database: config.CHDatabase,
+		Username: config.CHUsername,
+		Password: config.CHPassword,
+		Table:    config.CHTable,
+	}
+	writer, err := clickhouse.New(chConfig, 1000)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ClickHouse writer: %w", err)
+	}
+
 	// Create API handlers
-	clickhouseAPI := NewClickHouseAPI(chConn, config.CHTable)
+	clickhouseAPI := NewClickHouseAPI(chConn, config.CHTable, writer)
 	statsAPI := NewStatsAPI(chConn, config.CHStatsTable)
 
 	// Create gRPC server if port is specified
@@ -103,6 +118,7 @@ func (s *Server) setupRoutes(mux *http.ServeMux) {
 
 	// ClickHouse endpoints
 	mux.HandleFunc("/api/clickhouse/canopen/messages", s.clickhouseAPI.GetCANopenMessages)
+	mux.HandleFunc("/api/clickhouse/export", s.clickhouseAPI.ExportData)
 
 	// SocketCAN statistics endpoints
 	mux.HandleFunc("/api/stats/latest", s.statsAPI.GetLatestStats)
@@ -127,6 +143,7 @@ func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 				"count":    "/api/clickhouse/count?start_time=2024-01-01T00:00:00Z&can_id=0x123",
 				"can_ids":  "/api/clickhouse/can_ids",
 				"stats":    "/api/clickhouse/stats?limit=10",
+				"export":   "POST /api/clickhouse/export (body: {start_time, end_time, filename?, compression?}) - Downloads Parquet file",
 			},
 			"canopen": map[string]string{
 				"messages": "/api/clickhouse/canopen/messages?message_type=pdo&start_time=2024-01-01T00:00:00Z&interface=can0&limit=100",

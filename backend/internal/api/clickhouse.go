@@ -1,10 +1,12 @@
 package api
 
 import (
+	"can-db-writer/internal/database/clickhouse"
 	"can-db-writer/internal/models"
 	"context"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -14,13 +16,15 @@ import (
 type ClickHouseAPI struct {
 	conn      driver.Conn
 	tableName string
+	writer    *clickhouse.Writer
 }
 
 // NewClickHouseAPI creates a new ClickHouse API handler
-func NewClickHouseAPI(conn driver.Conn, tableName string) *ClickHouseAPI {
+func NewClickHouseAPI(conn driver.Conn, tableName string, writer *clickhouse.Writer) *ClickHouseAPI {
 	return &ClickHouseAPI{
 		conn:      conn,
 		tableName: tableName,
+		writer:    writer,
 	}
 }
 
@@ -275,4 +279,96 @@ func (api *ClickHouseAPI) GetCANopenMessages(w http.ResponseWriter, r *http.Requ
 	}
 
 	respondWithJSON(w, http.StatusOK, messages)
+}
+
+// ExportData exports CAN messages to Parquet format
+// POST /api/clickhouse/export
+// Request body:
+// {
+//   "start_time": "2024-01-01T00:00:00Z",
+//   "end_time": "2024-01-02T00:00:00Z",
+//   "filename": "export.parquet" (optional, default: can_messages_YYYYMMDD.parquet),
+//   "compression": "snappy|lz4|brotli|zstd|gzip|none" (optional, default: zstd)
+// }
+// Response: Parquet file download
+func (api *ClickHouseAPI) ExportData(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		respondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	var req struct {
+		StartTime   string `json:"start_time"`
+		EndTime     string `json:"end_time"`
+		Filename    string `json:"filename"`
+		Compression string `json:"compression"`
+	}
+
+	if err := parseJSONBody(r, &req); err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request body: %v", err))
+		return
+	}
+
+	// Parse times
+	startTime, err := time.Parse(time.RFC3339, req.StartTime)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid start_time format: %v", err))
+		return
+	}
+
+	endTime, err := time.Parse(time.RFC3339, req.EndTime)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid end_time format: %v", err))
+		return
+	}
+
+	// Set default compression (as per ClickHouse documentation: zstd)
+	if req.Compression == "" {
+		req.Compression = "zstd"
+	}
+
+	// Validate compression (ClickHouse supported codecs)
+	validCompressions := map[string]bool{
+		"snappy": true,
+		"lz4":    true,
+		"brotli": true,
+		"zstd":   true,
+		"gzip":   true,
+		"none":   true,
+	}
+	if !validCompressions[req.Compression] {
+		respondWithError(w, http.StatusBadRequest, "Invalid compression. Must be one of: snappy, lz4, brotli, zstd, gzip, none")
+		return
+	}
+
+	// Generate filename if not provided
+	filename := req.Filename
+	if filename == "" {
+		filename = fmt.Sprintf("can_messages_%s.parquet", startTime.Format("20060102"))
+	}
+	// Ensure .parquet extension
+	if filepath.Ext(filename) != ".parquet" {
+		filename += ".parquet"
+	}
+
+	// Create export options
+	opts := clickhouse.ExportOptions{
+		Format:      clickhouse.FormatParquet,
+		StartTime:   startTime,
+		EndTime:     endTime,
+		Compression: req.Compression,
+	}
+
+	// Set HTTP headers for file download
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+
+	// Stream the export directly to the HTTP response
+	if err := api.writer.ExportToWriter(w, api.tableName, opts); err != nil {
+		// Note: If an error occurs after we start writing to w, we can't send a proper error response
+		// The client will receive a partial file
+		fmt.Printf("Export error: %v\n", err)
+		return
+	}
 }
